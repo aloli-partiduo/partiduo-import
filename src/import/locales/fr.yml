@@ -1,0 +1,169 @@
+fr:
+  import:
+    module:
+      name: "Import d'opérations"
+    permissions:
+      read: "Consulter les imports d'opérations, la zone d'attente, les formats et les correspondances"
+      run: "Lire et importer des fichiers d'opérations, vérifier, transférer, écarter, reprendre le lettrage"
+      admin: "Paramétrer les formats et les correspondances, créer les comptes manquants, supprimer un import, purger"
+    menu:
+      import: "Import d'opérations"
+      import_run: "Importer des opérations"
+      import_operations: "Opérations à traiter"
+      import_history: "Historique des imports"
+      import_formats: "Formats d'import d'opérations"
+      import_mappings: "Correspondances d'import"
+    kinds:
+      csv: "CSV"
+      fec: "FEC"
+    ledger_kinds:
+      purchase: "Achats"
+      sale: "Ventes"
+      financial: "Financier"
+      misc: "Opérations diverses"
+    statuses:
+      pending: "À traiter"
+      transferred: "Transférée"
+      duplicate: "Doublon"
+      discarded: "Écartée"
+    mapping_kinds:
+      ledger: "Journal"
+      vat: "Code de TVA"
+      code: "Compte ou fiche"
+    target_types:
+      ledger: "Journal"
+      vat: "Taux de TVA"
+      account: "Compte"
+      card: "Fiche"
+    fields:
+      date: "Date"
+      ledger: "Code du journal"
+      group: "Code de regroupement"
+      receipt: "Pièce"
+      label: "Libellé de l'opération"
+      currency: "Devise"
+      due_date: "Échéance"
+      third_party: "Tiers (fiche)"
+      account: "Compte ou fiche"
+      line_label: "Libellé de la ligne"
+      amount: "Montant"
+      side: "Sens (D ou C)"
+      debit: "Débit"
+      credit: "Crédit"
+      quantity: "Quantité"
+      vat_code: "Code de TVA"
+      vat_amount: "Montant de TVA"
+      amount_incl: "Montant toutes taxes"
+      analytic: "Postes analytiques"
+    separators:
+      comma: "Virgule (,)"
+      semicolon: "Point-virgule (;)"
+      tab: "Tabulation"
+      pipe: "Barre verticale (|)"
+    quotes:
+      double: "Guillemet (\")"
+      single: "Apostrophe (')"
+      none: "Aucun"
+    encodings:
+      utf-8: "UTF-8"
+      windows-1252: "Windows-1252"
+      iso-8859-15: "ISO 8859-15 (Latin-9)"
+    decimal_separators:
+      comma: "Virgule (1234,56)"
+      dot: "Point (1234.56)"
+    thousands_separators:
+      none: "Aucun"
+      space: "Espace (1 234)"
+      dot: "Point (1.234)"
+      comma: "Virgule (1,234)"
+      apostrophe: "Apostrophe (1'234)"
+    errors:
+      choice:
+        invalid: "Valeur non admise : %{value}."
+      access:
+        forbidden: "Droit manquant : %{permission}."
+        module: "Le module %{module} n'est pas actif dans ce dossier."
+      file:
+        blank: "Choisissez un fichier ou collez son contenu."
+        too_large: "Le fichier dépasse %{max} Mio."
+        binary: "Ce fichier n'est pas un fichier texte."
+        empty: "Le fichier ne contient aucune opération."
+        filename_blank: "Le fichier doit avoir un nom."
+        malformed_csv: "Fichier CSV illisible : %{detail}"
+        too_many_rows: "Le fichier dépasse %{max} lignes."
+        already_imported: "Ce fichier a déjà été importé le %{date} (import n° %{id})."
+      fec:
+        separator: "En-tête du FEC sans séparateur reconnu (tabulation, barre verticale ou point-virgule)."
+        columns: "Zones manquantes dans l'en-tête du FEC : %{columns}."
+        field_count: "Ligne %{row} : %{count} zones au lieu de %{expected}."
+        blank: "Ligne %{row} : la zone %{column} est vide."
+      line:
+        date: "Ligne %{row} : date illisible (%{value})."
+        due_date: "Ligne %{row} : échéance illisible (%{value})."
+        date_mismatch: "Ligne %{row} : date différente de celle de l'opération (%{value})."
+        amount: "Ligne %{row} : montant illisible (%{value})."
+        side: "Ligne %{row} : sens illisible (%{value}) ; attendu D ou C."
+        zero: "Ligne %{row} : montant nul."
+        account_blank: "Ligne %{row} : compte ou fiche absent."
+        third_party_blank: "Ligne %{row} : tiers absent."
+      format:
+        blank: "Choisissez le format du fichier CSV."
+        unknown: "Ce format n'existe plus."
+        name:
+          blank: "Donnez un nom au format."
+          too_long: "Le nom ne doit pas dépasser %{max} caractères."
+          taken: "Un format porte déjà ce nom."
+        description:
+          too_long: "La description ne doit pas dépasser %{max} caractères."
+        thousands_separator:
+          same: "Le séparateur de milliers doit différer du séparateur décimal."
+        skip_lines:
+          range: "Le nombre de lignes d'en-tête va de 0 à 50."
+        columns:
+          not_allowed: "Le champ « %{field} » ne s'emploie pas pour ce genre de journal."
+          repeated: "Le champ « %{field} » est attribué à deux colonnes."
+          missing: "Indiquez la colonne du champ « %{field} »."
+          amount_both: "Indiquez soit le montant et le sens, soit le débit et le crédit."
+          amount_missing: "Indiquez la colonne du montant et celle du sens, ou celles du débit et du crédit."
+          too_many: "Un format a au plus %{max} colonnes."
+      ledger:
+        blank: "Aucun journal : choisissez-en un, ou ajoutez la colonne du code du journal."
+        invalid: "Ce journal ne vous est pas ouvert."
+        unknown: "Journal %{code} inconnu : ajoutez sa correspondance."
+        kind: "Le journal %{code} n'est pas un journal du genre attendu."
+        not_writable: "Vous ne pouvez pas écrire dans le journal %{code}."
+      operation:
+        no_line: "L'opération n'a aucune ligne."
+        single_line: "Une écriture a au moins deux lignes."
+        unbalanced: "Écriture déséquilibrée : débit %{debit}, crédit %{credit} (écart %{difference})."
+        financial_lines: "Une opération d'un journal financier n'a qu'une ligne."
+        not_pending: "Cette opération n'est plus à traiter."
+        none_selected: "Cochez au moins une opération."
+      code:
+        unknown: "Compte ou fiche %{code} inconnu : ajoutez sa correspondance."
+        unknown_account: "Compte %{code} absent du plan : créez-le ou ajoutez sa correspondance."
+      third_party:
+        blank: "Le tiers de la facture est absent."
+        not_card: "Le tiers %{code} doit être une fiche, pas un compte."
+      vat:
+        unknown: "Code de TVA %{code} inconnu : ajoutez sa correspondance."
+      analytic:
+        financial: "La ventilation analytique ne s'importe pas dans un journal financier."
+        inactive: "Le module Analytique n'est pas actif : retirez les postes analytiques."
+        unknown: "Poste analytique %{code} inconnu."
+        ambiguous: "Le code %{code} désigne des postes de plusieurs plans analytiques."
+      mapping:
+        source:
+          blank: "Indiquez le code du fichier."
+          too_long: "Le code ne doit pas dépasser %{max} caractères."
+          taken: "Le code %{code} a déjà une correspondance."
+        target:
+          blank: "Indiquez la cible dans le dossier."
+          unknown: "%{code} n'existe pas dans le dossier."
+        note:
+          too_long: "La note ne doit pas dépasser %{max} caractères."
+      batch:
+        in_use: "Des opérations de cet import sont déjà transférées : il est conservé."
+      lettering:
+        not_fec: "Seul un FEC porte un lettrage à reprendre."
+        pending: "Lettrage %{letter} du compte %{account} : toutes ses lignes ne sont pas encore transférées."

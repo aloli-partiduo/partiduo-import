@@ -1,0 +1,17 @@
+{# SPDX-License-Identifier: AGPL-3.0-or-later. Une opération de la zone d'attente (variable operation) : case à cocher pour les actions groupées (formulaire imp-bulk), date, libellé, pièce et tiers de l'émetteur, lignes, motifs du refus, journal retenu, total, statut ; pour une opération à traiter, bouton « Vérifier » envoyé en HTMX, qui remplace la ligne par la réponse du serveur. Rendue seule en réponse à HTMX. #}<tr id="imp-operation-{{ operation.id }}" class="imp-operation{% if operation.ready %} imp-ready{% endif %}{% if operation.refused %} imp-row-error{% endif %}" data-imp-operation="{{ operation.id }}" data-imp-status="{{ operation.status }}">
+  <td>{% if operation.selectable %}<input type="checkbox" form="imp-bulk" name="ids" value="{{ operation.id }}" id="imp-check-{{ operation.id }}" aria-label="{% translate 'import_ui.operations.select' %} {{ operation.label }}">{% endif %}</td>
+  <td class="pd-mono"><time datetime="{{ operation.iso_date }}">{{ operation.date }}</time></td>
+  <td>{{ operation.label }}{% if operation.receipt %} <small class="pd-mono pd-muted">{{ operation.receipt }}</small>{% endif %}{% if operation.third_party %}<br><small>{{ operation.third_party }}</small>{% endif %}
+    <details class="imp-lines"><summary>{% translate "import_ui.operations.lines" %} ({{ operation.count }})</summary>{% include "import/_lines.html" with lines=operation.lines %}</details>
+    {% if operation.problems %}<ul class="imp-problems" data-imp-problems>{% for problem in operation.problems %}<li>{{ problem.message }}</li>{% endfor %}</ul>{% endif %}
+    {% if operation.recorded %}<span class="tag is-warning is-light" data-imp-recorded><a href="{{ operation.recorded_url }}">{% translate "import_ui.operations.recorded" %}</a></span>{% endif %}
+    {% if operation.reversed %}<span class="tag is-light" data-imp-reversed>{% translate "import_ui.operations.reversed" %}</span>{% endif %}
+    {% if form_error %}<p class="help is-danger" role="alert">{{ form_error }}</p>{% endif %}</td>
+  <td class="pd-mono">{% if operation.ledger %}{{ operation.ledger }}{% endif %}</td>
+  <td class="amount">{{ operation.total }}</td>
+  <td><span class="tag {{ operation.status_class }} is-light">{{ operation.status_label }}</span>
+    {% if operation.ready %}<span class="tag is-success is-light" data-imp-ready>{% translate "import_ui.operations.ready" %}</span>{% endif %}
+    {% if operation.unchecked %}<span class="tag is-light">{% translate "import_ui.operations.unchecked" %}</span>{% endif %}
+    {% if operation.entry_url %}<a href="{{ operation.entry_url }}" class="pd-mono">{{ operation.posted_receipt }}</a>{% endif %}
+    {% if operation.can_check %}<form method="post" action="{{ operation.check_url }}" class="imp-inline" hx-post="{{ operation.check_url }}" hx-target="#imp-operation-{{ operation.id }}" hx-swap="outerHTML" data-imp-check>{% csrf_input %}<input type="hidden" name="next" value="{{ next }}"><button class="button is-small is-text" type="submit">{% translate "import_ui.operations.check_one" %}<span class="is-sr-only"> : {{ operation.label }}</span></button></form>{% endif %}</td>
+</tr>

@@ -1,0 +1,169 @@
+nl:
+  import:
+    module:
+      name: "Import van verrichtingen"
+    permissions:
+      read: "Imports van verrichtingen, de wachtzone, formaten en koppelingen raadplegen"
+      run: "Bestanden met verrichtingen lezen en importeren, controleren, overboeken, weren, de afpunting overnemen"
+      admin: "Formaten en koppelingen beheren, ontbrekende rekeningen aanmaken, een import verwijderen, opschonen"
+    menu:
+      import: "Import van verrichtingen"
+      import_run: "Verrichtingen importeren"
+      import_operations: "Te verwerken verrichtingen"
+      import_history: "Importgeschiedenis"
+      import_formats: "Importformaten van verrichtingen"
+      import_mappings: "Importkoppelingen"
+    kinds:
+      csv: "CSV"
+      fec: "FEC"
+    ledger_kinds:
+      purchase: "Aankopen"
+      sale: "Verkopen"
+      financial: "Financieel"
+      misc: "Diverse verrichtingen"
+    statuses:
+      pending: "Te verwerken"
+      transferred: "Overgeboekt"
+      duplicate: "Dubbel"
+      discarded: "Geweerd"
+    mapping_kinds:
+      ledger: "Dagboek"
+      vat: "Btw-code"
+      code: "Rekening of fiche"
+    target_types:
+      ledger: "Dagboek"
+      vat: "Btw-tarief"
+      account: "Rekening"
+      card: "Fiche"
+    fields:
+      date: "Datum"
+      ledger: "Dagboekcode"
+      group: "Groeperingscode"
+      receipt: "Stuk"
+      label: "Omschrijving van de verrichting"
+      currency: "Munt"
+      due_date: "Vervaldag"
+      third_party: "Derde (fiche)"
+      account: "Rekening of fiche"
+      line_label: "Omschrijving van de lijn"
+      amount: "Bedrag"
+      side: "Zijde (D of C)"
+      debit: "Debet"
+      credit: "Credit"
+      quantity: "Hoeveelheid"
+      vat_code: "Btw-code"
+      vat_amount: "Btw-bedrag"
+      amount_incl: "Bedrag inclusief belastingen"
+      analytic: "Analytische posten"
+    separators:
+      comma: "Komma (,)"
+      semicolon: "Puntkomma (;)"
+      tab: "Tab"
+      pipe: "Verticale streep (|)"
+    quotes:
+      double: "Dubbel aanhalingsteken (\")"
+      single: "Apostrof (')"
+      none: "Geen"
+    encodings:
+      utf-8: "UTF-8"
+      windows-1252: "Windows-1252"
+      iso-8859-15: "ISO 8859-15 (Latin-9)"
+    decimal_separators:
+      comma: "Komma (1234,56)"
+      dot: "Punt (1234.56)"
+    thousands_separators:
+      none: "Geen"
+      space: "Spatie (1 234)"
+      dot: "Punt (1.234)"
+      comma: "Komma (1,234)"
+      apostrophe: "Apostrof (1'234)"
+    errors:
+      choice:
+        invalid: "Waarde niet toegestaan: %{value}."
+      access:
+        forbidden: "Ontbrekend recht: %{permission}."
+        module: "De module %{module} is niet actief in dit dossier."
+      file:
+        blank: "Kies een bestand of plak de inhoud ervan."
+        too_large: "Het bestand is groter dan %{max} MiB."
+        binary: "Dit bestand is geen tekstbestand."
+        empty: "Het bestand bevat geen verrichting."
+        filename_blank: "Het bestand moet een naam hebben."
+        malformed_csv: "Onleesbaar CSV-bestand: %{detail}"
+        too_many_rows: "Het bestand telt meer dan %{max} lijnen."
+        already_imported: "Dit bestand werd al geïmporteerd op %{date} (import nr. %{id})."
+      fec:
+        separator: "FEC-hoofding zonder herkend scheidingsteken (tab, verticale streep of puntkomma)."
+        columns: "Ontbrekende zones in de FEC-hoofding: %{columns}."
+        field_count: "Lijn %{row}: %{count} zones in plaats van %{expected}."
+        blank: "Lijn %{row}: de zone %{column} is leeg."
+      line:
+        date: "Lijn %{row}: onleesbare datum (%{value})."
+        due_date: "Lijn %{row}: onleesbare vervaldag (%{value})."
+        date_mismatch: "Lijn %{row}: datum verschilt van die van de verrichting (%{value})."
+        amount: "Lijn %{row}: onleesbaar bedrag (%{value})."
+        side: "Lijn %{row}: onleesbare zijde (%{value}); D of C verwacht."
+        zero: "Lijn %{row}: bedrag nul."
+        account_blank: "Lijn %{row}: rekening of fiche ontbreekt."
+        third_party_blank: "Lijn %{row}: derde ontbreekt."
+      format:
+        blank: "Kies het formaat van het CSV-bestand."
+        unknown: "Dit formaat bestaat niet meer."
+        name:
+          blank: "Geef het formaat een naam."
+          too_long: "De naam mag niet langer zijn dan %{max} tekens."
+          taken: "Een formaat draagt al deze naam."
+        description:
+          too_long: "De beschrijving mag niet langer zijn dan %{max} tekens."
+        thousands_separator:
+          same: "Het scheidingsteken voor duizendtallen moet verschillen van het decimaalteken."
+        skip_lines:
+          range: "Het aantal hoofdingslijnen ligt tussen 0 en 50."
+        columns:
+          not_allowed: "Het veld „%{field}” wordt niet gebruikt voor dit soort dagboek."
+          repeated: "Het veld „%{field}” is aan twee kolommen toegewezen."
+          missing: "Geef de kolom van het veld „%{field}”."
+          amount_both: "Geef ofwel het bedrag en de zijde, ofwel debet en credit."
+          amount_missing: "Geef de kolommen van bedrag en zijde, of die van debet en credit."
+          too_many: "Een formaat telt hoogstens %{max} kolommen."
+      ledger:
+        blank: "Geen dagboek: kies er een, of voeg de kolom van de dagboekcode toe."
+        invalid: "Dit dagboek staat niet voor u open."
+        unknown: "Onbekend dagboek %{code}: voeg de koppeling toe."
+        kind: "Het dagboek %{code} is niet van het verwachte soort."
+        not_writable: "U kunt niet schrijven in dagboek %{code}."
+      operation:
+        no_line: "De verrichting heeft geen lijn."
+        single_line: "Een boeking heeft minstens twee lijnen."
+        unbalanced: "Boeking niet in evenwicht: debet %{debit}, credit %{credit} (verschil %{difference})."
+        financial_lines: "Een verrichting van een financieel dagboek heeft slechts één lijn."
+        not_pending: "Deze verrichting is niet meer te verwerken."
+        none_selected: "Vink minstens één verrichting aan."
+      code:
+        unknown: "Onbekende rekening of fiche %{code}: voeg de koppeling toe."
+        unknown_account: "Rekening %{code} ontbreekt in het rekeningstelsel: maak ze aan of voeg de koppeling toe."
+      third_party:
+        blank: "De derde van de factuur ontbreekt."
+        not_card: "De derde %{code} moet een fiche zijn, geen rekening."
+      vat:
+        unknown: "Onbekende btw-code %{code}: voeg de koppeling toe."
+      analytic:
+        financial: "Analytische verdeling wordt niet geïmporteerd in een financieel dagboek."
+        inactive: "De module Analytisch is niet actief: verwijder de analytische posten."
+        unknown: "Onbekende analytische post %{code}."
+        ambiguous: "De code %{code} duidt posten van meerdere analytische plannen aan."
+      mapping:
+        source:
+          blank: "Geef de code uit het bestand."
+          too_long: "De code mag niet langer zijn dan %{max} tekens."
+          taken: "De code %{code} heeft al een koppeling."
+        target:
+          blank: "Geef het doel in het dossier."
+          unknown: "%{code} bestaat niet in het dossier."
+        note:
+          too_long: "De notitie mag niet langer zijn dan %{max} tekens."
+      batch:
+        in_use: "Verrichtingen van deze import zijn al overgeboekt: hij wordt bewaard."
+      lettering:
+        not_fec: "Enkel een FEC bevat een over te nemen afpunting."
+        pending: "Afpunting %{letter} van rekening %{account}: nog niet alle lijnen zijn overgeboekt."

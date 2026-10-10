@@ -1,0 +1,134 @@
+= partiduo-import — import d'opérations en masse
+:toc: left
+:toc-title: Table des matières
+:icons: font
+
+*Partiduo* est le portage en Crystal de https://noalyss.eu[NOALYSS], logiciel
+libre de comptabilité créé et maintenu par *Dany De Bontridder*. Partiduo
+n'est pas un projet officiel NOALYSS.
+
+Ce dépôt est l'extension `IMPORT` de Partiduo (ADR-003, table « Sort des
+extensions amont »), successeur de l'import avancé de NOALYSS
+(`advancedimport`, IMPOP2) et de la correspondance des codes de TVA de
+`noalyss-plugins/import_account` (D-OUT-001 du cœur) — la source *legacy* :
+on en porte les fonctions, pas le code. Des écritures de *tous les types de
+journaux* — achats, ventes, financiers, opérations diverses — sont lues dans
+un CSV au format enregistré ou dans un *fichier des écritures comptables*
+(FEC, article A47 A-1 du LPF), essayées à blanc par le service d'écriture de
+la Comptabilité, mises en attente avec les motifs de leurs refus, puis
+transférées sur votre décision, avec la numérotation du cœur et le fichier
+source en pièce jointe.
+
+Spécification : `../partiduo-docs/adr/ADR-003-contrat-extensions.adoc`, avec
+ADR-005 (interface), ADR-006 (Comptabilité) et ADR-011 (dossier foyer).
+Décisions (`D-IMP-*`), inventaire des fonctions legacy et amendements
+proposés : link:DECISIONS.adoc[]. Référence du contrat :
+link:doc/api/import.adoc[].
+
+== Fonctions
+
+[cols="1,3",options="header"]
+|===
+|Fonction |Dans IMPORT
+
+|Formats CSV enregistrés
+|Genre de journal, séparateur, délimiteur de texte, encodage (UTF-8,
+Windows-1252, ISO 8859-15), lignes d'en-tête, format de date (les huit de
+l'application d'origine), séparateurs décimal et de milliers, rang de la
+colonne de chaque champ (date, journal, regroupement, pièce, libellé,
+devise, échéance, tiers, compte ou fiche, libellé de ligne, montant, sens,
+débit, crédit, quantité, code et montant de TVA, toutes taxes, postes
+analytiques).
+
+|FEC
+|Zones lues par leur nom, tabulation, barre verticale ou point-virgule,
+encodage reconnu ; une écriture par journal et numéro d'écriture ; comptes
+auxiliaires vers les fiches ; comptes absents du plan créés *un par un, sur
+demande* ; reprise du lettrage (`EcritureLet`) ; écriture déjà reprise par
+`partiduo-migrate` signalée.
+
+|Correspondances
+|Journaux, codes de TVA, comptes et fiches de l'émetteur vers ceux du
+dossier ; codes inconnus des opérations à traiter listés et complétés sur
+place.
+
+|Aperçu à blanc et zone d'attente
+|Chaque opération est passée *réellement* par le service d'écriture dans
+`Partiduo::Api::Transaction.dry_run`, puis tout est annulé : pièce que le
+cœur donnerait, ou motifs du refus (écriture déséquilibrée, période close,
+compte inconnu…). Rien ne passe d'office.
+
+|Doublons
+|Opération déjà importée (empreinte, occurrences comptées), fichier déjà
+importé, écriture semblable déjà passée hors de l'extension.
+
+|Transfert
+|Une écriture par opération par `post_entry`, `post_purchase`, `post_sale`
+ou `post_financial` (variantes ventilées de l'analytique), avec l'acteur
+réel ; refus gardés sur l'opération ; extourne rendue à traiter
+(`entry.cancelled`).
+
+|Historique
+|Imports, compteurs, anomalies de lecture, fichier d'origine
+téléchargeable, suppression d'un import non transféré.
+|===
+
+La *reprise intégrale* d'un dossier venu d'un autre logiciel dans une
+instance neuve (plan, journaux, exercices, fiches, rapport de
+réconciliation au centime) reste l'affaire de `partiduo-migrate` ; l'import
+d'un FEC ici complète un dossier *existant* (D-IMP-011).
+
+== Organisation
+
+[source]
+----
+src/
+├── partiduo-import.cr          # point d'entrée du shard
+├── partiduo-import/cli.cr      # migrations : require "partiduo-import/cli"
+└── import/                     # métier (application Marten « import »)
+    ├── app.cr, manifest.cr     # code IMPORT, permissions, menus, abonnement
+    ├── models/                 # tables import_*
+    ├── migrations/             # 0001 : tables et contraintes
+    ├── parsers/                # CSV, FEC, montants, dates, encodages, champs
+    ├── services/               # correspondances, essai à blanc, doublons, transfert, lettrage
+    ├── api/                    # contrat public Import::Api
+    └── locales/                # fr, en, nl
+ui/
+└── bulma/                      # interface pour partiduo-ui-bulma (application « import_ui »)
+    ├── bulma.cr                # routes sous /ext/IMPORT/, compteur du menu
+    ├── dashboard_tile.cr       # tuile « Opérations importées »
+    ├── handlers/, templates/import/, assets/import/, locales/
+spec/fixtures/                  # CSV d'opérations diverses, d'achats, de banque ; FEC
+----
+
+== Composer une distribution
+
+[source,crystal]
+----
+require "partiduo-ui-bulma/partiduo_ui"
+require "partiduo-import"
+require "partiduo-import/ui/bulma"
+# installed_apps += Import::INSTALLED_APPS + Import::Ui::INSTALLED_APPS
+# ligne de commande : require "partiduo-import/cli"
+----
+
+L'extension exige la Comptabilité (`depends_on "ACCOUNTING"`) ; elle
+s'active par dossier (`Partiduo::Api::Modules.activate`, écran « Modules »),
+dossier foyer compris.
+
+== Commandes
+
+[source,sh]
+----
+cd prod-crystal/partiduo/partiduo-import
+SKIP_MARTEN_CLI_PRECOMPILATION=1 shards install
+createdb -h /tmp partiduo_test_<agent>
+DATABASE_URL='postgres:///partiduo_test_<agent>?host=/tmp' crystal spec --order random
+crystal tool format src spec ui config scripts manage.cr && bin/ameba
+----
+
+== Version et licence
+
+Numéro dans `shard.yml` seulement (constante `Import::VERSION` lue à la
+compilation) ; chaque commit en incrémente le dernier chiffre. Licence
+AGPL-3.0-or-later (fichier `LICENSE`).

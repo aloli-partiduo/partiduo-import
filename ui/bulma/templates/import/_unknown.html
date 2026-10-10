@@ -1,0 +1,18 @@
+{# SPDX-License-Identifier: AGPL-3.0-or-later. Un code de l'émetteur sans correspondance (variable code) : genre, code et libellé lus dans le fichier, nombre d'opérations ; formulaire de correspondance (cible et sa nature) et, pour un compte d'un FEC, « Créer le compte » ; envoyés en HTMX, la réponse remplace la ligne. Rendue seule en réponse à HTMX. #}<tr id="{{ code.id }}" data-imp-unknown="{{ code.source }}">
+  <td>{{ code.kind_name }}<br><small class="pd-muted">{{ code.count }}</small></td>
+  <td class="pd-mono">{{ code.source }}{% if code.label %}<br><small class="pd-muted">{{ code.label }}</small>{% endif %}</td>
+  <td>
+    {% if code.done %}<p class="has-text-success" role="status" data-imp-done>{{ code.done }}</p>{% else %}
+    <form method="post" action="{% url 'import:mapping_quick' %}" class="imp-inline-form" hx-post="{% url 'import:mapping_quick' %}" hx-target="#{{ code.id }}" hx-swap="outerHTML" data-imp-quick>
+      {% csrf_input %}<input type="hidden" name="kind" value="{{ code.kind }}"><input type="hidden" name="unknown_kind" value="{{ code.raw_kind }}"><input type="hidden" name="source" value="{{ code.source }}"><input type="hidden" name="label" value="{{ code.label }}"><input type="hidden" name="count" value="{{ code.count_raw }}">
+      <label class="is-sr-only" for="{{ code.id }}-type">{% translate "import_ui.mappings.target_type" %}</label>
+      <div class="select is-small"><select id="{{ code.id }}-type" name="target_type">{% for type in code.types %}<option value="{{ type.value }}"{% if type.selected %} selected{% endif %}>{{ type.label }}</option>{% endfor %}</select></div>
+      <label class="is-sr-only" for="{{ code.id }}-target">{% translate "import_ui.mappings.target" %}</label>
+      <input class="input is-small pd-mono" type="text" id="{{ code.id }}-target" name="target" maxlength="100" autocomplete="off" placeholder="{% translate 'import_ui.mappings.target' %}">
+      <button class="button is-small pd-touch" type="submit">{% include "ui/_icon.html" with name="check" %}<span>{% translate "import_ui.mappings.map" %}<span class="is-sr-only"> : {{ code.source }}</span></span></button>
+    </form>
+    {% if code.creatable %}<form method="post" action="{% url 'import:account_create' %}" class="imp-inline" hx-post="{% url 'import:account_create' %}" hx-target="#{{ code.id }}" hx-swap="outerHTML" data-imp-create-account>{% csrf_input %}<input type="hidden" name="unknown_kind" value="{{ code.raw_kind }}"><input type="hidden" name="kind" value="{{ code.kind }}"><input type="hidden" name="source" value="{{ code.source }}"><input type="hidden" name="label" value="{{ code.label }}"><input type="hidden" name="count" value="{{ code.count_raw }}"><button class="button is-small is-text" type="submit">{% translate "import_ui.mappings.create_account" %}<span class="is-sr-only"> : {{ code.source }}</span></button></form>{% endif %}
+    {% endif %}
+    {% if code.error %}<p class="help is-danger" role="alert" data-imp-quick-error>{{ code.error }}</p>{% endif %}
+  </td>
+</tr>

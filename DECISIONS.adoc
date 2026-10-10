@@ -1,0 +1,389 @@
+= partiduo-import — décisions
+:toc: left
+:toc-title: Table des matières
+:icons: font
+
+Décisions prises pendant le portage de l'extension `IMPORT`, quand un point
+n'était pas tranché par les ADR (contexte, choix, alternative écartée),
+inventaire des fonctions de la source legacy, puis amendements proposés au
+contrat du cœur. Les ADR ne sont jamais modifiés : un écart ou un
+complément y est proposé ici.
+
+Spécification : ADR-003 (contrat d'extension, D6 surface publique, D7
+événements, table « Sort des extensions amont » : IMPOP2 et `import_account`
+vers `partiduo-import`), ADR-005 (interface), ADR-006 (Comptabilité),
+ADR-011 (dossier foyer) ; D-OUT-001 et D-OUT-002 du cœur. Sources
+fonctionnelles legacy : `advancedimport` (IMPOP2, environ 7 600 lignes) et
+`noalyss-plugins/import_account` (correspondance des codes de TVA), dont on
+porte les fonctions et non le code. Modèles suivis : `partiduo-bankimport`,
+`partiduo-amortis`, `partiduo-sepa`, `partiduo-reports`.
+
+== Inventaire des fonctions legacy
+
+[cols="3,1,4",options="header"]
+|===
+|Fonction legacy |Sort |Où, ou pourquoi
+
+|Import CSV de ventes et d'achats, colonnes fixes (date, code journal, code
+groupe, pièce, tiers, libellé, fiche service, quantité, hors taxe, code TVA,
+toutes taxes, échéance, date de paiement, référence analytique, devise,
+montant en devise, libellé de fiche)
+|Adapté
+|Format enregistré à colonnes choisies (D-IMP-005) ; article par sa fiche
+*ou* par un compte ; `post_purchase` / `post_sale` (D-IMP-007)
+
+|Import CSV financier (une ligne, contrepartie, montant signé)
+|Porté
+|Format de genre `financial`, `post_financial`
+
+|Import CSV d'opérations diverses (compte ou fiche, montant, D/C)
+|Porté
+|Format de genre `misc` ; en plus, colonnes débit et crédit ; `post_entry`
+
+|Réglages CSV : séparateur (`,`, `;`, tabulation), délimiteur de texte,
+décimal, milliers, encodage (UTF-8, Windows, Latin), huit formats de date
+|Porté
+|Plus la barre verticale ; Latin-1 lu en Windows-1252 (son sur-ensemble) ou
+ISO 8859-15 ; dates américaines en plus
+
+|Réglages gardés par import (`import_csv`)
+|Adapté
+|Formats *nommés et réutilisables* (`import_format`), choisis à l'import
+
+|Correspondance des codes de journal (`ledger_code`)
+|Porté
+|Correspondances de genre `ledger` (D-IMP-006)
+
+|Correspondance des codes de TVA (`parameter_tva`, et `import_account`)
+|Porté
+|Correspondances de genre `vat`
+
+|Code de compte ou de fiche inconnu : refus
+|Adapté
+|Correspondances de genre `code` (compte ou fiche de l'émetteur vers compte
+ou fiche du dossier), codes inconnus listés et complétés sur place
+
+|Vérification : date, période existante et ouverte, fiche utilisable dans
+le journal, montants, code TVA, sens D/C, devise, équilibre par groupe
+|Porté
+|Par l'essai à blanc du service d'écriture (`Transaction.dry_run`) : tous
+les contrôles du cœur, plus l'équilibre et le genre du journal contrôlés
+par l'extension avec leur motif (D-IMP-007)
+
+|Mode strict : pas d'opération antérieure à la dernière du journal
+|Délégué
+|Aux règles du cœur, appliquées par le service d'écriture
+
+|Transfert : les groupes sans erreur passent, les autres sont ignorés
+|Adapté
+|Transfert des opérations *cochées* ; une opération refusée reste à
+traiter avec ses motifs ; rien d'office (D-IMP-007)
+
+|Pièce du fichier reprise comme numéro de pièce, sinon pièce suivante
+|Adapté
+|Numérotation du cœur toujours ; la pièce de l'émetteur reste sur
+l'opération (D-IMP-007, amendement A-IMP-2)
+
+|Date de paiement (`jr_date_paid`) d'une facture
+|Refusé
+|Pas de donnée de paiement dans une écriture du cœur : le paiement est une
+écriture financière lettrée (rapprochement, `partiduo-bankimport`)
+
+|Devise : code et montant en devise (cours déduit)
+|Adapté
+|Colonne devise ; montants dans la devise, cours du socle à la date (règle
+de `EntryInput`) ; pas de montant en devise distinct
+
+|Import analytique : fichier à part, joint par une référence analytique
+|Adapté
+|Colonne « postes analytiques » par ligne : ligne entière, un poste par
+plan, par `Partiduo::Api::Analytic.post_*` (D-IMP-013) ; refusé en
+journal financier (amendement A-IMP-3)
+
+|Libellé de fiche par ligne (`id_cardlabel`)
+|Porté
+|Libellé de la ligne
+
+|Import FEC (tabulation ou point-virgule, encodage, contrôle de
+l'équilibre et de la date unique, comptes existants)
+|Porté
+|Lecteur FEC de l'extension (D-IMP-011)
+
+|FEC : création automatique des comptes manquants
+|Adapté
+|Création *explicite*, compte par compte, avec le libellé du fichier
+(`Api.create_account`, droit `accounting.account.write`) ; rien d'office
+
+|FEC : code de lettrage lu, jamais appliqué
+|Ajouté
+|Reprise du lettrage sur les lignes transférées (D-IMP-012)
+
+|Historique : imports, détail, nouvelle vérification, suppression
+|Porté
+|Historique, détail, vérification ; suppression refusée dès qu'une
+opération est transférée (D-IMP-009)
+
+|Export CSV des lignes importées
+|Remplacé
+|Téléchargement du fichier d'origine, conservé en pièce jointe
+
+|Codes mis en majuscules par déclencheur
+|Adapté
+|Correspondances sans égard à la casse ; quick codes normalisés par le cœur
+
+|Installation et mise à jour du schéma `impacc2`
+|Sans objet
+|Migration Marten `0001`
+
+|Doublons
+|Ajouté
+|Empreinte, fichier déjà importé, écriture semblable (D-IMP-008)
+|===
+
+== Décisions
+
+=== D-IMP-001 — Une extension sur la Comptabilité (10 octobre 2026)
+
+*Choix.* Extension `IMPORT`, `depends_on "ACCOUNTING"` (code vérifié dans
+`partiduo-app/src/accounting/manifest.cr`), `requires_core "~> 0.1"`,
+version lue dans `shard.yml`. Contrat public `Import::Api`
+(`doc/api/import.adoc`), même plan qu'une application du cœur et que
+`partiduo-bankimport`. Aucune table comptable propre : toute écriture passe
+par le service d'écriture de la Comptabilité.
+
+*Alternative écartée.* Importer dans le cœur (D-OUT-001 l'a écarté : le
+cœur n'importe pas d'écritures hors `partiduo-migrate`).
+
+=== D-IMP-002 — Dossier foyer : pas d'incompatibilité (10 octobre 2026)
+
+*Contexte.* L'amendement A1 d'ADR-011 permet `incompatible_with` ; un foyer
+tient la Comptabilité sur un plan réduit, sans TVA ni analytique, avec un
+journal financier et un journal d'opérations diverses.
+
+*Choix.* Aucune incompatibilité. Un foyer qui quitte un autre logiciel de
+finances personnelles reprend son historique de compte (format financier
+ou d'opérations diverses) ou ses écritures. Les formats d'achats et de
+ventes n'y trouvent pas de journal (motif `ledger.kind`) ; un code de TVA ou
+un poste analytique y est refusé avec le motif du module inactif
+(`access.module`, `analytic.inactive`). Une spec le vérifie.
+
+*Alternative écartée.* `incompatible_with "PERSO"` comme `partiduo-amortis` :
+rien dans l'import n'est propre aux entreprises.
+
+=== D-IMP-003 — Fichier conservé par le socle, liens sans clé étrangère (10 octobre 2026)
+
+*Choix.* Le fichier importé est enregistré par
+`Partiduo::Api::Core.store_attachment` (`text/csv` pour un CSV,
+`text/plain` pour un FEC) ; l'import garde son identifiant, qui devient la
+pièce jointe de chaque écriture transférée. Les identifiants du cœur
+(journal, écriture, ligne d'écriture, pièce jointe, lettrage) sont relus par
+le contrat, sans clé étrangère (même règle que D-BKI-003). Les liens
+internes (`import_*`, `auth_user`) ont leurs clés ; domaines contrôlés en
+base (genres, statuts, sens, réglages, cible d'une correspondance, unicité
+d'un code source par genre sans égard à la casse).
+
+=== D-IMP-004 — Droits de l'extension et du cœur, avec l'acteur réel (10 octobre 2026)
+
+*Choix.* `import.read` (zone d'attente, historique, formats,
+correspondances), `import.run` (aperçu, import, vérification, transfert,
+écarter, reprendre, lettrage), `import.admin` (formats, correspondances,
+création des comptes, suppression d'un import, purge). Le contrat du cœur
+exige en plus, *avec l'acteur réel, jamais l'acteur système* :
+`accounting.entry.post` dès l'aperçu (l'essai à blanc passe par le service
+d'écriture) et l'écriture dans chaque journal visé, `core.attachment.write`
+pour importer, `analytic.operation.write` pour une ventilation,
+`accounting.matching.write` pour le lettrage, `accounting.account.write`
+pour créer un compte ; les lectures (fiches, comptes, taux, postes) se font
+aussi avec ses droits, et un refus devient un motif nommé
+(`access.forbidden`). Une opération n'est visible que si son journal
+retenu l'est, ou si aucun journal n'est encore retenu.
+
+=== D-IMP-005 — Formats CSV enregistrés, correspondance des colonnes (10 octobre 2026)
+
+*Choix.* Un format (`import_format`) : nom, genre de journal (`purchase`,
+`sale`, `financial`, `misc`), journal proposé, séparateur, délimiteur de
+texte, encodage, lignes d'en-tête, format de date, séparateurs décimal et
+de milliers, et la *correspondance des colonnes* : la clé du champ de
+chaque colonne (`column_map`), saisie à l'écran comme le rang de la colonne
+de chaque champ. Champs admis et exigés par genre (`Parsers::Fields`) :
+date et compte toujours ; tiers et hors taxe pour une facture ; montant et
+sens, ou débit et crédit, pour une opération diverse ; montant signé pour
+un extrait financier. Les lignes d'une même opération se regroupent par le
+code de regroupement, à défaut par la pièce, à défaut chaque ligne seule.
+Une ligne illisible (date, montant, sens) *bloque son opération*
+(`read_problems`) au lieu d'en être retranchée : une facture amputée d'une
+ligne resterait équilibrée et passerait fausse. Montants en `BigDecimal`,
+jamais en flottant (spec de conventions).
+
+*Alternative écartée.* L'en-tête reconnu des imports du cœur (D-OUT-002) :
+les fichiers d'opérations viennent de logiciels tiers aux en-têtes libres ;
+le format enregistré se réutilise d'un mois à l'autre.
+
+=== D-IMP-006 — Correspondances des codes de l'émetteur (10 octobre 2026)
+
+*Choix.* Une table `import_mapping` : genre `ledger` (code de journal du
+fichier → journal), `vat` (code de TVA → taux, fonction d'`import_account`),
+`code` (compte ou fiche de l'émetteur → compte ou fiche du dossier). Ordre
+de recherche : correspondance (sans égard à la casse), sinon un code
+identique du dossier (fiche puis compte pour un CSV ; compte pour le
+`CompteNum` d'un FEC, fiche pour son `CompAuxNum`). La cible est contrôlée à
+l'enregistrement par le contrat du cœur. Les codes inconnus des opérations
+à traiter (`unknown_codes`) sont listés avec leur libellé lu et complétés
+sur place ; puis on vérifie de nouveau.
+
+=== D-IMP-007 — Aperçu à blanc, zone d'attente, rien d'office (10 octobre 2026)
+
+*Choix.* Comme les imports du cœur (D-OUT-002) et `partiduo-bankimport` :
+
+. *Aperçu* : chaque opération est traduite pour le dossier puis passée
+  *réellement* par le service d'écriture dans
+  `Partiduo::Api::Transaction.dry_run` (ajouté par D-OUT), chacune dans son
+  point de sauvegarde ; tout est annulé à la fin. On obtient tous les refus
+  du cœur et la pièce que l'écriture recevrait.
+. *Import* : fichier en pièce jointe, opérations *à traiter* avec les motifs
+  de l'essai ; rien n'est passé en comptabilité.
+. *Vérification* à la demande (après une correspondance ou un compte créé),
+  même essai à blanc.
+. *Transfert* des opérations cochées : une écriture par opération, par
+  `post_entry` (opérations diverses, FEC), `post_purchase`, `post_sale`,
+  `post_financial`, ou leurs variantes ventilées de l'analytique ; acteur
+  réel ; *numérotation du cœur* (la pièce de l'émetteur reste sur
+  l'opération, `receipt`, et la pièce donnée par le cœur est gardée,
+  `posted_receipt`) ; `source` = `import:operation:<id>` ; pièce jointe de
+  l'import. Chaque opération passe dans son point de sauvegarde, verrouillée
+  ; un refus reste sur l'opération, sans empêcher les autres.
+
+Une écriture *déséquilibrée* est refusée avec son motif nommé (débit,
+crédit, écart, `operation.unbalanced`) avant même le cœur, qui la
+refuserait aussi ; une écriture d'une seule ligne de même
+(`operation.single_line`). Un extrait financier n'a qu'une ligne par
+opération (`operation.financial_lines`, comme l'application d'origine).
+Statuts : `pending`, `transferred`, `duplicate`, `discarded` ; écarter,
+reprendre (nouvelle vérification), purger.
+
+*Alternative écartée.* Le transfert legacy des « groupes sans erreur » en
+ignorant les autres : une partie du fichier passerait sans que
+l'utilisateur l'ait décidé.
+
+=== D-IMP-008 — Doublons signalés (10 octobre 2026)
+
+*Choix.* Trois signaux, aucun ne supprime :
+
+* *opération déjà importée* : empreinte (genre, journal de l'émetteur ou
+  journal choisi, date, pièce, total, libellé normalisé, nombre de lignes),
+  occurrences comptées comme dans `partiduo-bankimport` ; l'opération est
+  mise de côté en `duplicate` (`duplicate_of_id`), jamais transférée tant
+  qu'on ne la reprend pas ;
+* *fichier déjà importé* (SHA-256) : refusé sauf « Importer quand même » ;
+* *écriture semblable déjà passée* hors de l'extension (même journal, date
+  et montant), ou déjà reprise par `partiduo-migrate` (référence
+  `fec:<journal>:<numéro>`) : signalée (`recorded_entry_id`).
+
+=== D-IMP-009 — Historique des imports (10 octobre 2026)
+
+*Choix.* Chaque import garde genre, genre de journal, format, journal
+choisi, nom, pièce jointe, empreinte, encodage lu, compteurs et anomalies
+de lecture. Un import dont aucune opération n'est transférée se supprime
+avec ses opérations et son fichier ; sinon il est conservé. Le fichier
+d'origine se télécharge (au lieu de l'export recomposé de l'application
+d'origine).
+
+=== D-IMP-010 — Écriture extournée : opération de nouveau à traiter (10 octobre 2026)
+
+*Choix.* Abonnement à `entry.cancelled` (liste fermée d'ADR-003 D7) :
+l'opération dont l'écriture est extournée redevient à traiter, garde la
+trace de l'écriture annulée (`reversed_entry_id`) et devra être vérifiée de
+nouveau. Aucun nouvel événement n'est publié par l'extension.
+
+=== D-IMP-011 — FEC dans un dossier existant ; partiduo-migrate pour une reprise (10 octobre 2026)
+
+*Contexte.* `partiduo-migrate` lit déjà le FEC : il reprend un dossier
+*entier* dans une instance *neuve* (plan, journaux, exercices, fiches,
+lettrage), en une transaction, avec un rapport de réconciliation au
+centime. C'est un outil en ligne de commande, hors de la distribution, qui
+embarque ses traductions et dépend de `pg` pour lire la base d'origine.
+
+*Choix.* Délégation et complément :
+
+* la *reprise complète* d'un dossier venu d'un autre logiciel reste à
+  `partiduo-migrate` (le README l'indique) ;
+* `partiduo-import` lit un FEC pour compléter un dossier *existant* (un
+  journal, une période, les écritures d'un cabinet) : correspondances,
+  aperçu à blanc, zone d'attente, comptes créés sur demande, lettrage repris,
+  et il *reconnaît* une écriture déjà reprise par `partiduo-migrate` par sa
+  référence `fec:<journal>:<numéro>` ;
+* lecteur propre (`Parsers::FecReader`) : mêmes règles que celui de
+  `partiduo-migrate` (zones par leur nom, `Debit`/`Credit` ou `Montant` et
+  `Sens`, soldes d'une ligne, ligne nulle ignorée, échéance facultative,
+  devise non reprise), sans dépendre d'un outil en ligne de commande. Un
+  lecteur commun est proposé au contrat (A-IMP-4).
+
+*Alternative écartée.* Dépendre de `partiduo-migrate` comme d'une
+bibliothèque : il n'en est pas une (point d'entrée de commande, traductions
+`migrate.*` chargées à la compilation, dépendance `pg`), et la distribution
+l'embarquerait sans s'en servir.
+
+=== D-IMP-012 — Reprise du lettrage d'un FEC (10 octobre 2026)
+
+*Choix.* Action explicite sur un import FEC : les lignes transférées d'un
+même compte (et compte auxiliaire) portant le même `EcritureLet` sont
+lettrées par `Partiduo::Api::Accounting.match_lines` quand *toutes* les
+lignes de ce code dans l'import sont transférées ; sinon le code est
+signalé (`lettering.pending`). Les lignes produites sont retrouvées par
+`input_index` ; une ligne lettrée ne l'est pas deux fois. Un refus de la
+Comptabilité est rendu avec le code de lettrage.
+
+=== D-IMP-013 — Analytique par ligne (10 octobre 2026)
+
+*Choix.* Colonne « postes analytiques » : codes des postes, un par plan
+(séparés par une espace, `/`, `|` ou `;`), ligne entière ventilée, par
+`Partiduo::Api::Analytic.post_entry`, `post_purchase` ou `post_sale`
+(`InputDistributionInput#post_ids`). Code inconnu ou présent dans plusieurs
+plans : motif nommé. Module inactif : refusé. Journal financier : refusé
+(pas de variante ventilée de `post_financial`, amendement A-IMP-3).
+
+*Alternative écartée.* Le second fichier legacy joint par une référence
+analytique : deux fichiers à garder cohérents pour une même écriture.
+
+=== D-IMP-014 — Interface : HTMX d'abord (10 octobre 2026)
+
+*Choix.* Formulaires ordinaires (import en deux temps, le fichier passant en
+base64 ; actions groupées par cases à cocher). HTMX pour la vérification
+d'une opération (la ligne est remplacée par la réponse) et pour compléter un
+code inconnu ou créer un compte sur place. Lignes d'une opération dans un
+`<details>`. Tuile « Opérations importées » et compteur du menu par les
+accroches `PartiduoUi::Extensions.tile` et `counter`. Opal n'est pas
+nécessaire à cette version ; il resterait admis pour une correspondance
+des colonnes par glisser-déposer sur un fichier d'exemple
+(`Api.sample` le prépare).
+
+== Amendements proposés au contrat du cœur
+
+À soumettre à l'utilisateur ; l'extension les contourne sans modifier
+`partiduo-app`. Aucun nouvel événement n'est demandé à ADR-003 D7.
+
+A-IMP-1 — Code de TVA d'une ligne d'écriture saisie (`Accounting::EntryLineInput`)::
+  Un champ `vat_rate` (et le rôle de la ligne) permettrait à `post_entry`
+  d'écrire des lignes de TVA reconnues par la déclaration. Aujourd'hui une
+  écriture d'achats ou de ventes reprise d'un FEC passe en lignes de
+  comptes ordinaires, sans taux ni rôle de TVA. Contournement : les
+  factures à déclarer passent par un format CSV d'achats ou de ventes
+  (`post_purchase`, `post_sale`), qui porte les codes de TVA.
+
+A-IMP-2 — Référence de l'émetteur sur une écriture (`EntryInput`, `DocumentInput`, `FinancialInput`)::
+  Un champ `external_reference` (pièce du logiciel d'origine), affiché et
+  cherché comme la pièce, garderait sur l'écriture le numéro de l'émetteur
+  sans renoncer à la numérotation du cœur. Contournement : la pièce de
+  l'émetteur reste sur l'opération de l'extension, liée à l'écriture.
+
+A-IMP-3 — Ventilation d'un extrait financier (`Analytic.post_financial`)::
+  Variante ventilée de `post_financial`, comme `post_entry`,
+  `post_purchase` et `post_sale`. Contournement : la ventilation est
+  refusée en journal financier (motif `analytic.financial`) ; on ventile
+  ensuite par `distribute_entry`.
+
+A-IMP-4 — Lecteur FEC commun (`Partiduo::Api::Accounting.read_fec`)::
+  Le cœur exporte déjà le FEC (`Accounting.fec`) ; un lecteur dans son
+  contrat (lignes, écritures, défauts) servirait `partiduo-migrate` et
+  `partiduo-import`, qui en ont chacun un aujourd'hui. Contournement :
+  lecteur propre à l'extension (D-IMP-011).

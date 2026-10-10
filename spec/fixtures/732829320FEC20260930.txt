@@ -1,0 +1,8 @@
+JournalCode	JournalLib	EcritureNum	EcritureDate	CompteNum	CompteLib	CompAuxNum	CompAuxLib	PieceRef	PieceDate	EcritureLib	Debit	Credit	EcritureLet	DateLet	ValidDate	Montantdevise	Idevise
+VT	Ventes	VT1	20260903	411000	Clients	CLI01	Client Un	F2026-1	20260903	Facture Client Un	1200,00	0,00	A	20260920	20260903		
+VT	Ventes	VT1	20260903	706000	Prestations de services			F2026-1	20260903	Facture Client Un	0,00	1000,00			20260903		
+VT	Ventes	VT1	20260903	445710	TVA collectée			F2026-1	20260903	Facture Client Un	0,00	200,00			20260903		
+BQ	Banque	BQ1	20260920	512000	Banque			R1	20260920	Règlement Client Un	1200,00	0,00			20260920		
+BQ	Banque	BQ1	20260920	411000	Clients	CLI01	Client Un	R1	20260920	Règlement Client Un	0,00	1200,00	A	20260920	20260920		
+OD	Opérations diverses	OD1	20260925	6061	Fournitures non stockables			P1	20260925	Petites fournitures	30,00	0,00			20260925		
+OD	Opérations diverses	OD1	20260925	512000	Banque			P1	20260925	Petites fournitures	0,00	30,00			20260925		

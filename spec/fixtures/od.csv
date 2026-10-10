@@ -1,0 +1,5 @@
+Date;Journal;Groupe;Pièce;Compte;Libellé;Montant;Sens
+15/09/2026;OD;G1;OD-1;627;Frais bancaires;12,50;D
+15/09/2026;OD;G1;OD-1;510001;Frais bancaires;12,50;C
+16/09/2026;OD;G2;OD-2;627;Erreur de saisie;10,00;D
+16/09/2026;OD;G2;OD-2;510001;Erreur de saisie;9,00;C

@@ -1,0 +1,78 @@
+/* SPDX-License-Identifier: AGPL-3.0-or-later
+ * Écrans de l'extension d'import d'opérations : propriétés logiques et
+ * jetons du thème de l'interface (thème sombre compris). */
+.imp-filters {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 0.75rem;
+  align-items: flex-end;
+}
+
+.imp-filters .field {
+  margin-block-end: 0;
+}
+
+.imp-bulk {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 0.5rem;
+  align-items: center;
+  border-block-end: 1px solid var(--pd-rule);
+}
+
+.imp-facts {
+  display: grid;
+  grid-template-columns: repeat(auto-fill, minmax(14rem, 1fr));
+  gap: 0.75rem 1.5rem;
+}
+
+.imp-facts dt {
+  color: var(--pd-muted);
+  font-size: 0.875rem;
+}
+
+.imp-table td {
+  vertical-align: top;
+}
+
+.imp-row-muted td {
+  color: var(--pd-muted);
+}
+
+.imp-row-error {
+  background: var(--pd-warn-bg);
+}
+
+.imp-ready {
+  background: var(--pd-ok-bg);
+}
+
+.imp-problems {
+  margin-block-start: 0.25rem;
+  padding-inline-start: 1rem;
+  list-style: disc;
+  font-size: 0.875rem;
+}
+
+.imp-lines summary {
+  cursor: pointer;
+  font-size: 0.875rem;
+  color: var(--pd-muted);
+}
+
+.imp-lines-table {
+  font-size: 0.875rem;
+  margin-block-start: 0.25rem;
+}
+
+.imp-inline,
+.imp-inline-form {
+  display: inline-flex;
+  flex-wrap: wrap;
+  gap: 0.25rem 0.5rem;
+  align-items: center;
+}
+
+.imp-inline-form .input {
+  inline-size: 10rem;
+}

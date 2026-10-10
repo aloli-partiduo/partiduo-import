@@ -1,0 +1,41 @@
+{# SPDX-License-Identifier: AGPL-3.0-or-later. Zone d'attente des opérations importées : filtres (statut, texte, refusées seulement), actions groupées sur les opérations cochées (vérifier, transférer, écarter, reprendre) par le formulaire imp-bulk, et une ligne par opération (_operation.html) avec ses lignes, ses motifs de refus et sa vérification en HTMX. #}{% extend "ui/base.html" %}
+{% block title %}{{ title }}{% endblock title %}
+{% block scripts %}<link rel="stylesheet" href="{% asset 'import/css/import.css' %}">{% endblock scripts %}
+{% block crumbs %}{% include "ui/_crumbs.html" %}{% endblock crumbs %}
+{% block heading %}{{ title }}{% endblock heading %}
+{% block actions %}{% for action in actions %}{% include "ui/_action.html" %}{% endfor %}{% endblock actions %}
+{% block content %}
+{% if unknown %}<div class="notification is-warning is-light pd-alert" role="status" data-imp-unknown>{% include "ui/_icon.html" with name="triangle-alert" %}<div><p>{{ unknown }} <a href="{% url 'import:mappings' %}">{% translate "import_ui.operations.complete_mappings" %}</a></p></div></div>{% endif %}
+<form method="get" action="{% url 'import:operations' %}" class="imp-filters mb-3" role="search" aria-label="{% translate 'import_ui.operations.filters' %}">
+  {% if batch %}<input type="hidden" name="batch" value="{{ batch }}">{% endif %}
+  <div class="field"><label class="label" for="imp-filter-status">{% translate "import_ui.operations.status" %}</label>
+    <div class="select"><select id="imp-filter-status" name="status">{% for option in statuses %}<option value="{{ option.value }}"{% if option.selected %} selected{% endif %}>{{ option.label }}</option>{% endfor %}</select></div></div>
+  <div class="field"><label class="label" for="imp-filter-q">{% translate "ui.table.search" %}</label>
+    <input class="input" type="search" id="imp-filter-q" name="q" value="{{ q }}"></div>
+  <label class="checkbox pd-check" for="imp-filter-refused"><input type="checkbox" id="imp-filter-refused" name="refused" value="1"{% if refused %} checked{% endif %}> {% translate "import_ui.operations.refused_only" %}</label>
+  <button class="button pd-touch" type="submit">{% translate "ui.table.filter" %}</button>
+</form>
+<section class="pd-panel" aria-labelledby="imp-operations-title">
+  <header><h2 id="imp-operations-title">{% translate "import_ui.operations.title" %}</h2><span class="pd-muted" role="status" data-imp-summary>{{ summary }}</span></header>
+  {% if can_run %}
+  <form method="post" action="{% url 'import:operations_action' %}" id="imp-bulk" class="imp-bulk pd-body" data-imp-bulk>
+    {% csrf_input %}<input type="hidden" name="next" value="{{ next }}">
+    <span class="pd-muted">{% translate "import_ui.operations.bulk" %}</span>
+    {% if pending %}<button class="button is-primary is-small pd-touch" type="submit" name="action" value="transfer">{% include "ui/_icon.html" with name="send" %}<span>{% translate "import_ui.operations.transfer" %}</span></button>
+    <button class="button is-small pd-touch" type="submit" name="action" value="check">{% include "ui/_icon.html" with name="check" %}<span>{% translate "import_ui.operations.check" %}</span></button>
+    <button class="button is-small pd-touch" type="submit" name="action" value="discard">{% include "ui/_icon.html" with name="x" %}<span>{% translate "import_ui.operations.discard" %}</span></button>{% endif %}
+    {% if restorable %}<button class="button is-small pd-touch" type="submit" name="action" value="restore">{% include "ui/_icon.html" with name="undo-2" %}<span>{% translate "import_ui.operations.restore" %}</span></button>{% endif %}
+  </form>
+  {% endif %}
+  {% if rows %}
+  <div class="pd-scroll"><table class="table is-fullwidth is-narrow imp-table" id="imp-operations" data-imp-operations>
+    <caption class="is-sr-only">{% translate "import_ui.operations.title" %}</caption>
+    <thead><tr><th scope="col"><span class="is-sr-only">{% translate "import_ui.operations.select" %}</span></th><th scope="col">{% translate "import_ui.operations.date" %}</th><th scope="col">{% translate "import_ui.operations.label" %}</th><th scope="col">{% translate "import_ui.operations.ledger" %}</th><th scope="col" class="amount">{% translate "import_ui.operations.total" %}</th><th scope="col">{% translate "import_ui.operations.state" %}</th></tr></thead>
+    <tbody>{% for operation in rows %}{% include "import/_operation.html" %}{% endfor %}</tbody>
+  </table></div>
+  {% if truncated %}<div class="pd-body"><p class="help">{{ truncated }}</p></div>{% endif %}
+  {% else %}
+  <div class="pd-body"><p class="pd-muted" data-imp-empty>{% translate "import_ui.operations.none" %}</p></div>
+  {% endif %}
+</section>
+{% endblock content %}

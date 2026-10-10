@@ -1,0 +1,35 @@
+{# SPDX-License-Identifier: AGPL-3.0-or-later. Un import (historique) : fichier, genre, format, encodage, période, total, compteurs ; anomalies de lecture ; opérations de l'import avec leur statut, leurs lignes et leurs motifs. #}{% extend "ui/base.html" %}
+{% block title %}{{ title }}{% endblock title %}
+{% block scripts %}<link rel="stylesheet" href="{% asset 'import/css/import.css' %}">{% endblock scripts %}
+{% block crumbs %}{% include "ui/_crumbs.html" %}{% endblock crumbs %}
+{% block heading %}{{ title }}{% endblock heading %}
+{% block actions %}{% for action in actions %}{% include "ui/_action.html" %}{% endfor %}{% endblock actions %}
+{% block content %}
+<section class="pd-panel" aria-labelledby="imp-batch-facts">
+  <header><h2 id="imp-batch-facts">{% translate "import_ui.batches.facts" %}</h2></header>
+  <div class="pd-body">
+    <dl class="imp-facts">
+      <div><dt>{% translate "import_ui.batches.kind" %}</dt><dd>{{ batch.kind }}{% if batch.ledger_kind %} · {{ batch.ledger_kind }}{% endif %}{% if format %} · {{ format }}{% endif %}</dd></div>
+      <div><dt>{% translate "import_ui.batches.created" %}</dt><dd>{{ batch.created }}</dd></div>
+      {% if batch.ledger %}<div><dt>{% translate "import_ui.operations.ledger" %}</dt><dd class="pd-mono">{{ batch.ledger }}</dd></div>{% endif %}
+      {% if batch.encoding %}<div><dt>{% translate "import_ui.import.encoding" %}</dt><dd>{{ batch.encoding }}</dd></div>{% endif %}
+      {% if batch.period %}<div><dt>{% translate "import_ui.batches.period" %}</dt><dd>{{ batch.period }}</dd></div>{% endif %}
+      <div><dt>{% translate "import_ui.operations.total" %}</dt><dd class="pd-mono">{{ batch.total }}</dd></div>
+      <div><dt>{% translate "import_ui.batches.counts" %}</dt><dd data-imp-counts>{{ batch.operations }} · {% translate "import.statuses.pending" %} {{ batch.pending }} ({% translate "import_ui.batches.refused" %} {{ batch.refused }}) · {% translate "import.statuses.transferred" %} {{ batch.transferred }} · {% translate "import.statuses.duplicate" %} {{ batch.duplicates }} · {% translate "import.statuses.discarded" %} {{ batch.discarded }}</dd></div>
+    </dl>
+    {% if issues %}<h3 class="has-text-weight-semibold mt-3">{% translate "import_ui.import.issues" %}</h3><ul class="pd-list" data-imp-issues>{% for issue in issues %}<li>{{ issue.message }}</li>{% endfor %}</ul>{% endif %}
+  </div>
+</section>
+<section class="pd-panel" aria-labelledby="imp-batch-operations">
+  <header><h2 id="imp-batch-operations">{% translate "import_ui.operations.title" %}</h2></header>
+  {% if rows %}
+  <div class="pd-scroll"><table class="table is-fullwidth is-narrow imp-table" data-imp-batch-operations>
+    <caption class="is-sr-only">{% translate "import_ui.operations.title" %}</caption>
+    <thead><tr><th scope="col"><span class="is-sr-only">{% translate "import_ui.operations.select" %}</span></th><th scope="col">{% translate "import_ui.operations.date" %}</th><th scope="col">{% translate "import_ui.operations.label" %}</th><th scope="col">{% translate "import_ui.operations.ledger" %}</th><th scope="col" class="amount">{% translate "import_ui.operations.total" %}</th><th scope="col">{% translate "import_ui.operations.state" %}</th></tr></thead>
+    <tbody>{% for operation in rows %}{% include "import/_operation.html" %}{% endfor %}</tbody>
+  </table></div>
+  {% else %}
+  <div class="pd-body"><p class="pd-muted">{% translate "import_ui.operations.none" %}</p></div>
+  {% endif %}
+</section>
+{% endblock content %}

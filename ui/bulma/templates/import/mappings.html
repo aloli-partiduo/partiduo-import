@@ -1,0 +1,32 @@
+{# SPDX-License-Identifier: AGPL-3.0-or-later. Correspondances des codes de l'émetteur (journaux, codes de TVA, comptes et fiches) : en tête, les codes inconnus des opérations à traiter, chacun avec son formulaire envoyé en HTMX (_unknown.html), puis la liste des correspondances enregistrées. #}{% extend "ui/base.html" %}
+{% block title %}{{ title }}{% endblock title %}
+{% block scripts %}<link rel="stylesheet" href="{% asset 'import/css/import.css' %}">{% endblock scripts %}
+{% block crumbs %}{% include "ui/_crumbs.html" %}{% endblock crumbs %}
+{% block heading %}{{ title }}{% endblock heading %}
+{% block actions %}{% for action in actions %}{% include "ui/_action.html" %}{% endfor %}{% endblock actions %}
+{% block content %}
+<p class="pd-intro">{% translate "import_ui.mappings.intro" %}</p>
+{% if unknown %}
+<section class="pd-panel" aria-labelledby="imp-unknown-title">
+  <header><h2 id="imp-unknown-title">{% translate "import_ui.mappings.unknown" %}</h2></header>
+  <div class="pd-body"><p class="help">{% translate "import_ui.mappings.unknown_help" %}</p></div>
+  <div class="pd-scroll"><table class="table is-fullwidth is-narrow imp-table" data-imp-unknown-codes>
+    <caption class="is-sr-only">{% translate "import_ui.mappings.unknown" %}</caption>
+    <thead><tr><th scope="col">{% translate "import_ui.mappings.kind" %}</th><th scope="col">{% translate "import_ui.mappings.source" %}</th><th scope="col">{% translate "import_ui.mappings.target" %}</th></tr></thead>
+    <tbody>{% for code in unknown %}{% include "import/_unknown.html" %}{% endfor %}</tbody>
+  </table></div>
+</section>
+{% endif %}
+<section class="pd-panel" aria-labelledby="imp-mappings-title">
+  <header><h2 id="imp-mappings-title">{% translate "import_ui.mappings.list" %}</h2></header>
+  {% if mappings %}
+  <div class="pd-scroll"><table class="table is-fullwidth is-narrow imp-table" data-imp-mappings>
+    <caption class="is-sr-only">{% translate "import_ui.mappings.list" %}</caption>
+    <thead><tr><th scope="col">{% translate "import_ui.mappings.kind" %}</th><th scope="col">{% translate "import_ui.mappings.source" %}</th><th scope="col">{% translate "import_ui.mappings.target" %}</th><th scope="col">{% translate "import_ui.mappings.note" %}</th></tr></thead>
+    <tbody>{% for mapping in mappings %}<tr><td>{{ mapping.kind }}</td><td class="pd-mono"><a href="{{ mapping.url }}">{{ mapping.source }}</a></td><td><span class="pd-muted">{{ mapping.type }}</span> <span class="pd-mono">{{ mapping.target }}</span>{% if mapping.label %} · {{ mapping.label }}{% else %} <span class="tag is-warning is-light">{% translate "import_ui.mappings.target_missing" %}</span>{% endif %}</td><td>{% if mapping.note %}{{ mapping.note }}{% endif %}</td></tr>{% endfor %}</tbody>
+  </table></div>
+  {% else %}
+  <div class="pd-body"><p class="pd-muted">{% translate "import_ui.mappings.none" %}</p></div>
+  {% endif %}
+</section>
+{% endblock content %}

@@ -1,0 +1,92 @@
+= Contrat `Import::Api`
+:toc: left
+:toc-title: Table des matières
+:icons: font
+
+Contrat public de l'extension `IMPORT`, sur le modèle de `Partiduo::Api` :
+acteur en premier argument, contrôle d'accès en première ligne (extension
+active, permission), vues immuables, commandes qui rendent un `Result` avec
+des erreurs par champ (`import.errors.*`), dans une transaction.
+L'interface `ui/bulma/` ne passe que par lui.
+
+== Permissions
+
+[cols="1,3",options="header"]
+|===
+|Permission |Ouvre
+|`import.read` |`formats`, `format`, `sample`, `mappings`, `mapping`, `unknown_codes`, `detect_kind`, `batches`, `batch`, `batch_content` (+ `core.attachment.read`), `operations`, `count_operations`, `operation`, `tile`, `pending_count`
+|`import.run` |`preview` (+ `accounting.entry.post`), `import_file` (+ `core.attachment.write`, `accounting.entry.post`), `check` (+ `accounting.entry.post`), `transfer` (+ `accounting.entry.post`, journal en écriture, `analytic.operation.write` si ventilé), `discard`, `restore`, `apply_lettering` (+ `accounting.matching.write`)
+|`import.admin` |`check_format`, `create_format`, `update_format`, `delete_format`, `create_mapping`, `update_mapping`, `delete_mapping`, `create_account` (+ `accounting.account.write`), `delete_batch`, `purge`
+|===
+
+Une opération n'est visible que si son journal retenu est visible de
+l'acteur (`Partiduo::Api::Accounting.ledgers`), ou si aucun journal n'est
+encore retenu.
+
+== Import
+
+* `preview(actor, ImportInput) : Result(PreviewView)` — lit et essaie
+  chaque opération à blanc (`Transaction.dry_run`) : journal retenu, pièce
+  que donnerait le cœur (`posted_receipt`), doublon, écriture semblable
+  (`recorded_entry_id`), motifs (`problems`) ; anomalies de lecture
+  (`rows[<ligne>]`) ; import antérieur du même fichier.
+* `import_file(actor, ImportInput) : Result(BatchView)` — pièce jointe,
+  opérations à traiter vérifiées, doublons mis de côté. Erreurs :
+  `file.blank|too_large|binary|empty|filename_blank|malformed_csv|
+  already_imported|too_many_rows`, `fec.separator|columns`,
+  `format.blank|unknown`, `choice.invalid` ; celles du socle pour la pièce.
+* `ImportInput` : `filename`, `content` (octets), `kind` (`auto`, `csv`,
+  `fec`), `format_id` (CSV), `ledger_id` (CSV sans colonne de journal),
+  `encoding` (FEC, `auto`), `allow_same_file`.
+
+== Zone d'attente
+
+* `operations(actor, OperationQuery)` — filtres : `batch_id`, `status`
+  (`pending` par défaut, `nil` pour tous), `ledger_id`, `search`,
+  `refused_only`. `OperationView#ready?` : vérifiée sans motif.
+* `check(actor, ids = nil) : Result(CheckReportView)` — nouvel essai à
+  blanc des opérations à traiter.
+* `transfer(actor, ids) : Result(TransferReportView)` — une écriture par
+  opération ; `source` = `import:operation:<id>` ; refus gardés
+  (`problems`). Motifs propres : `ledger.blank|unknown|kind|not_writable`,
+  `operation.no_line|single_line|unbalanced|financial_lines|not_pending|
+  none_selected`, `code.unknown|unknown_account`,
+  `third_party.blank|not_card`, `vat.unknown`,
+  `analytic.inactive|financial|unknown|ambiguous`,
+  `access.forbidden|module` ; et ceux de la Comptabilité
+  (`accounting.errors.*`).
+* `discard`, `restore` (nouvelle vérification), `purge`.
+* `apply_lettering(actor, batch_id) : Result(LetteringReportView)` — FEC
+  seulement (`lettering.not_fec`) ; codes en attente :
+  `lettering.pending`.
+
+== Formats et correspondances
+
+* `FormatInput` : `name`, `ledger_kind` (`purchase`, `sale`, `financial`,
+  `misc`), `columns` (clé du champ de chaque colonne, `""` ignorée),
+  `description`, `ledger_id`, `separator`, `quote`, `encoding`,
+  `skip_lines`, `date_format`, `decimal_separator`, `thousands_separator`.
+  Erreurs : `format.name.*`, `format.description.too_long`,
+  `format.thousands_separator.same`, `format.skip_lines.range`,
+  `format.columns.not_allowed|repeated|missing|amount_both|amount_missing|
+  too_many`, `ledger.invalid|kind`, `choice.invalid`.
+* `MappingInput` : `kind` (`ledger`, `vat`, `code`), `source`,
+  `target_type` (`ledger` ; `vat` ; `account` ou `card`), `target`,
+  `note`. Erreurs : `mapping.source.blank|too_long|taken`,
+  `mapping.target.blank|unknown`, `mapping.note.too_long`,
+  `choice.invalid`.
+* `unknown_codes(actor) : Array(UnknownCodeView)` — codes sans
+  correspondance relevés dans les motifs (`ledger`, `vat`, `code`,
+  `account` pour un compte d'un FEC).
+* `create_account(actor, number, label)` — par
+  `Partiduo::Api::Accounting.create_account`.
+
+== Historique
+
+`batches`, `batch`, `batch_content` (fichier d'origine), `delete_batch`
+(`batch.in_use` dès qu'une opération est transférée).
+
+== Événements
+
+Abonnement à `entry.cancelled` : l'opération dont l'écriture est extournée
+redevient à traiter (`reversed_entry_id`). Aucun événement publié.

@@ -1,0 +1,169 @@
+en:
+  import:
+    module:
+      name: "Transaction import"
+    permissions:
+      read: "View transaction imports, the waiting area, formats and mappings"
+      run: "Read and import transaction files, check, transfer, discard, apply lettering"
+      admin: "Manage formats and mappings, create absent accounts, delete an import, purge"
+    menu:
+      import: "Transaction import"
+      import_run: "Import transactions"
+      import_operations: "Transactions to process"
+      import_history: "Import history"
+      import_formats: "Transaction import formats"
+      import_mappings: "Import mappings"
+    kinds:
+      csv: "CSV"
+      fec: "FEC"
+    ledger_kinds:
+      purchase: "Purchases"
+      sale: "Sales"
+      financial: "Financial"
+      misc: "Miscellaneous"
+    statuses:
+      pending: "To process"
+      transferred: "Transferred"
+      duplicate: "Duplicate"
+      discarded: "Discarded"
+    mapping_kinds:
+      ledger: "Ledger"
+      vat: "VAT code"
+      code: "Account or card"
+    target_types:
+      ledger: "Ledger"
+      vat: "VAT rate"
+      account: "Account"
+      card: "Card"
+    fields:
+      date: "Date"
+      ledger: "Ledger code"
+      group: "Grouping code"
+      receipt: "Receipt"
+      label: "Transaction label"
+      currency: "Currency"
+      due_date: "Due date"
+      third_party: "Third party (card)"
+      account: "Account or card"
+      line_label: "Line label"
+      amount: "Amount"
+      side: "Side (D or C)"
+      debit: "Debit"
+      credit: "Credit"
+      quantity: "Quantity"
+      vat_code: "VAT code"
+      vat_amount: "VAT amount"
+      amount_incl: "Amount including taxes"
+      analytic: "Analytic posts"
+    separators:
+      comma: "Comma (,)"
+      semicolon: "Semicolon (;)"
+      tab: "Tab"
+      pipe: "Vertical bar (|)"
+    quotes:
+      double: "Double quote (\")"
+      single: "Single quote (')"
+      none: "None"
+    encodings:
+      utf-8: "UTF-8"
+      windows-1252: "Windows-1252"
+      iso-8859-15: "ISO 8859-15 (Latin-9)"
+    decimal_separators:
+      comma: "Comma (1234,56)"
+      dot: "Dot (1234.56)"
+    thousands_separators:
+      none: "None"
+      space: "Space (1 234)"
+      dot: "Dot (1.234)"
+      comma: "Comma (1,234)"
+      apostrophe: "Apostrophe (1'234)"
+    errors:
+      choice:
+        invalid: "Value not allowed: %{value}."
+      access:
+        forbidden: "Missing permission: %{permission}."
+        module: "Module %{module} is not active in this file."
+      file:
+        blank: "Choose a file or paste its content."
+        too_large: "The file exceeds %{max} MiB."
+        binary: "This file is not a text file."
+        empty: "The file contains no transaction."
+        filename_blank: "The file must have a name."
+        malformed_csv: "Unreadable CSV file: %{detail}"
+        too_many_rows: "The file exceeds %{max} lines."
+        already_imported: "This file was already imported on %{date} (import #%{id})."
+      fec:
+        separator: "FEC header without a recognised separator (tab, vertical bar or semicolon)."
+        columns: "Missing fields in the FEC header: %{columns}."
+        field_count: "Line %{row}: %{count} fields instead of %{expected}."
+        blank: "Line %{row}: field %{column} is empty."
+      line:
+        date: "Line %{row}: unreadable date (%{value})."
+        due_date: "Line %{row}: unreadable due date (%{value})."
+        date_mismatch: "Line %{row}: date differs from the transaction's (%{value})."
+        amount: "Line %{row}: unreadable amount (%{value})."
+        side: "Line %{row}: unreadable side (%{value}); D or C expected."
+        zero: "Line %{row}: zero amount."
+        account_blank: "Line %{row}: no account or card."
+        third_party_blank: "Line %{row}: no third party."
+      format:
+        blank: "Choose the format of the CSV file."
+        unknown: "This format no longer exists."
+        name:
+          blank: "Give the format a name."
+          too_long: "The name must not exceed %{max} characters."
+          taken: "A format already has this name."
+        description:
+          too_long: "The description must not exceed %{max} characters."
+        thousands_separator:
+          same: "The thousands separator must differ from the decimal separator."
+        skip_lines:
+          range: "The number of header lines ranges from 0 to 50."
+        columns:
+          not_allowed: "Field “%{field}” is not used for this kind of ledger."
+          repeated: "Field “%{field}” is assigned to two columns."
+          missing: "Give the column of field “%{field}”."
+          amount_both: "Give either the amount and the side, or the debit and the credit."
+          amount_missing: "Give the amount and side columns, or the debit and credit columns."
+          too_many: "A format has at most %{max} columns."
+      ledger:
+        blank: "No ledger: choose one, or add the ledger code column."
+        invalid: "This ledger is not open to you."
+        unknown: "Unknown ledger %{code}: add its mapping."
+        kind: "Ledger %{code} is not of the expected kind."
+        not_writable: "You cannot write to ledger %{code}."
+      operation:
+        no_line: "The transaction has no line."
+        single_line: "An entry has at least two lines."
+        unbalanced: "Unbalanced entry: debit %{debit}, credit %{credit} (difference %{difference})."
+        financial_lines: "A financial ledger transaction has a single line."
+        not_pending: "This transaction is no longer to process."
+        none_selected: "Tick at least one transaction."
+      code:
+        unknown: "Unknown account or card %{code}: add its mapping."
+        unknown_account: "Account %{code} not in the chart: create it or add its mapping."
+      third_party:
+        blank: "The invoice has no third party."
+        not_card: "Third party %{code} must be a card, not an account."
+      vat:
+        unknown: "Unknown VAT code %{code}: add its mapping."
+      analytic:
+        financial: "Analytic distribution is not imported into a financial ledger."
+        inactive: "The Analytic module is not active: remove the analytic posts."
+        unknown: "Unknown analytic post %{code}."
+        ambiguous: "Code %{code} matches posts of several analytic plans."
+      mapping:
+        source:
+          blank: "Give the code used in the file."
+          too_long: "The code must not exceed %{max} characters."
+          taken: "Code %{code} already has a mapping."
+        target:
+          blank: "Give the target in this file."
+          unknown: "%{code} does not exist in this file."
+        note:
+          too_long: "The note must not exceed %{max} characters."
+      batch:
+        in_use: "Transactions of this import are already transferred: it is kept."
+      lettering:
+        not_fec: "Only a FEC carries lettering to apply."
+        pending: "Lettering %{letter} of account %{account}: not all its lines are transferred yet."

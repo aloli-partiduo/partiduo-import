@@ -1,0 +1,4 @@
+Date;Pièce;Fournisseur;Compte;Libellé;Quantité;HT;TVA;TTC;Échéance
+10/09/2026;FA-101;FOURN1;603;Fournitures;1;100,00;T20;120,00;10/10/2026
+10/09/2026;FA-101;FOURN1;627;Frais de port;1;50,00;T20;60,00;10/10/2026
+12/09/2026;FA-102;FOURN1;603;Marchandises;2;200,00;T55;211,00;

@@ -1,0 +1,80 @@
+{# SPDX-License-Identifier: AGPL-3.0-or-later. Import d'un fichier d'opérations en deux temps : fichier (ou texte collé), genre (CSV au format enregistré, FEC, ou reconnu), journal d'un CSV sans colonne de journal, encodage d'un FEC ; puis aperçu de chaque opération essayée à blanc par le service d'écriture de la Comptabilité (pièce qu'elle recevrait, motifs du refus, doublon, écriture semblable déjà passée) et import dans la zone d'attente. Formulaires ordinaires, sans JavaScript. #}{% extend "ui/base.html" %}
+{% block title %}{{ title }}{% endblock title %}
+{% block scripts %}<link rel="stylesheet" href="{% asset 'import/css/import.css' %}">{% endblock scripts %}
+{% block crumbs %}{% include "ui/_crumbs.html" %}{% endblock crumbs %}
+{% block heading %}{{ title }}{% endblock heading %}
+{% block content %}
+{% if error %}<div class="notification is-danger is-light pd-alert" role="alert" id="imp-import-error">{% include "ui/_icon.html" with name="triangle-alert" %}<div><p>{{ error }}</p></div></div>{% endif %}
+{% if step == "start" %}
+<section class="pd-panel" aria-labelledby="imp-import-file">
+  <header><h2 id="imp-import-file">{% translate "import_ui.import.file_title" %}</h2></header>
+  <div class="pd-body">
+    <form method="post" action="{% url 'import:import' %}" enctype="multipart/form-data" class="pd-form" novalidate data-imp-import>
+      {% csrf_input %}
+      <input type="hidden" name="step" value="preview">
+      <div class="pd-form-grid">
+        <div class="field"><label class="label" for="imp-kind">{% translate "import_ui.import.kind" %}</label>
+          <div class="select is-fullwidth"><select id="imp-kind" name="kind">{% for option in kinds %}<option value="{{ option.value }}"{% if option.selected %} selected{% endif %}>{{ option.label }}</option>{% endfor %}</select></div></div>
+        <div class="field"><label class="label" for="imp-format">{% translate "import_ui.import.format" %}</label>
+          <div class="select is-fullwidth"><select id="imp-format" name="format_id" aria-describedby="imp-format-help">{% for option in formats %}<option value="{{ option.value }}"{% if option.selected %} selected{% endif %}>{{ option.label }}</option>{% endfor %}</select></div>
+          <p class="help" id="imp-format-help">{% translate "import_ui.import.format_help" %}{% if no_format %}{% if can_admin %} <a href="{% url 'import:format_new' %}">{% translate "import_ui.formats.new" %}</a>{% endif %}{% endif %}</p></div>
+        <div class="field"><label class="label" for="imp-ledger">{% translate "import_ui.import.ledger" %}</label>
+          <div class="select is-fullwidth"><select id="imp-ledger" name="ledger_id" aria-describedby="imp-ledger-help">{% for option in ledgers %}<option value="{{ option.value }}"{% if option.selected %} selected{% endif %}>{{ option.label }}</option>{% endfor %}</select></div>
+          <p class="help" id="imp-ledger-help">{% translate "import_ui.import.ledger_help" %}</p></div>
+        <div class="field"><label class="label" for="imp-encoding">{% translate "import_ui.import.encoding" %}</label>
+          <div class="select is-fullwidth"><select id="imp-encoding" name="encoding" aria-describedby="imp-encoding-help">{% for option in encodings %}<option value="{{ option.value }}"{% if option.selected %} selected{% endif %}>{{ option.label }}</option>{% endfor %}</select></div>
+          <p class="help" id="imp-encoding-help">{% translate "import_ui.import.encoding_help" %}</p></div>
+      </div>
+      <div class="field"><label class="label" for="imp-upload">{% translate "import_ui.import.file" %}</label>
+        <input class="input" type="file" id="imp-upload" name="file" accept=".csv,.txt,text/csv,text/plain" aria-describedby="imp-upload-help{% if error %} imp-import-error{% endif %}"></div>
+      <p class="help" id="imp-upload-help">{% translate "import_ui.import.file_help" %}</p>
+      <div class="field"><label class="label" for="imp-content">{% translate "import_ui.import.paste" %}</label>
+        <textarea class="textarea pd-mono" id="imp-content" name="content" rows="6"{% if error %} aria-invalid="true" aria-describedby="imp-import-error"{% endif %}></textarea></div>
+      <div class="pd-form-actions"><button class="button is-primary pd-touch" type="submit">{% include "ui/_icon.html" with name="upload" %}<span>{% translate "import_ui.import.preview" %}</span></button></div>
+    </form>
+  </div>
+</section>
+{% endif %}
+{% if step == "preview" %}
+<form method="post" action="{% url 'import:import' %}" class="pd-form" novalidate data-imp-preview>
+  {% csrf_input %}
+  <input type="hidden" name="payload" value="{{ payload }}">
+  <input type="hidden" name="filename" value="{{ filename }}">
+  <input type="hidden" name="kind" value="{{ kind }}">
+  <input type="hidden" name="format_id" value="{{ format_id }}">
+  <input type="hidden" name="ledger_id" value="{{ ledger_id }}">
+  <input type="hidden" name="encoding" value="{{ encoding }}">
+  <section class="pd-panel" aria-labelledby="imp-preview-title">
+    <header><h2 id="imp-preview-title">{{ filename }}</h2><span class="pd-muted" role="status" data-imp-summary>{{ summary }}</span></header>
+    <div class="pd-body">
+      <dl class="imp-facts">
+        <div><dt>{% translate "import_ui.import.kind" %}</dt><dd>{{ kind_label }}{% if ledger_kind %} · {{ ledger_kind }}{% endif %}</dd></div>
+        {% if encoding_label %}<div><dt>{% translate "import_ui.import.encoding" %}</dt><dd>{{ encoding_label }}</dd></div>{% endif %}
+      </dl>
+      <p class="help">{% translate "import_ui.import.preview_help" %}</p>
+      {% if same_file %}<div class="notification is-warning is-light pd-alert" role="status" data-imp-same-file>{% include "ui/_icon.html" with name="triangle-alert" %}<div><p>{% translate "import_ui.import.same_file" %} <a href="{{ same_file }}">{% translate "import_ui.import.same_file_link" %}</a></p>
+        <label class="checkbox pd-check" for="imp-allow-same"><input type="checkbox" id="imp-allow-same" name="allow_same_file" value="1"> {% translate "import_ui.import.allow_same_file" %}</label></div></div>{% endif %}
+      {% if issues %}<h3 class="has-text-weight-semibold">{% translate "import_ui.import.issues" %}</h3><ul class="pd-list" data-imp-issues>{% for issue in issues %}<li>{{ issue.message }}</li>{% endfor %}</ul>{% endif %}
+    </div>
+    {% if rows %}
+    <div class="pd-scroll"><table class="table is-fullwidth is-narrow imp-table" data-imp-preview-table>
+      <caption class="is-sr-only">{% translate "import_ui.import.rows" %}</caption>
+      <thead><tr><th scope="col">{% translate "import_ui.operations.row" %}</th><th scope="col">{% translate "import_ui.operations.date" %}</th><th scope="col">{% translate "import_ui.operations.label" %}</th><th scope="col">{% translate "import_ui.operations.ledger" %}</th><th scope="col" class="amount">{% translate "import_ui.operations.total" %}</th><th scope="col">{% translate "import_ui.operations.state" %}</th></tr></thead>
+      <tbody>{% for row in rows %}<tr class="{% if row.problems %}imp-row-error{% elsif row.duplicate %}imp-row-muted{% endif %}" data-imp-position="{{ row.position }}"><td class="pd-mono">{{ row.position }}</td><td class="pd-mono">{{ row.date }}</td>
+        <td>{{ row.label }}{% if row.receipt %} <small class="pd-mono pd-muted">{{ row.receipt }}</small>{% endif %}{% if row.third_party %}<br><small>{{ row.third_party }}</small>{% endif %}
+          <details class="imp-lines"><summary>{% translate "import_ui.operations.lines" %} ({{ row.count }})</summary>{% include "import/_lines.html" with lines=row.lines %}</details>
+          {% if row.problems %}<ul class="imp-problems" data-imp-problems>{% for problem in row.problems %}<li>{{ problem.message }}</li>{% endfor %}</ul>{% endif %}</td>
+        <td class="pd-mono">{{ row.ledger }}</td><td class="amount">{{ row.total }}</td>
+        <td>{% if row.duplicate %}<span class="tag is-warning is-light">{% translate "import.statuses.duplicate" %}</span>{% elsif row.problems %}<span class="tag is-danger is-light">{% translate "import_ui.operations.refused" %}</span>{% else %}<span class="tag is-success is-light">{% translate "import_ui.operations.accepted" %}</span>{% if row.posted_receipt %} <small class="pd-mono pd-muted">{{ row.posted_receipt }}</small>{% endif %}{% endif %}
+          {% if row.recorded %}<br><span class="tag is-warning is-light" data-imp-recorded>{% translate "import_ui.operations.recorded" %}</span>{% endif %}</td></tr>{% endfor %}</tbody>
+    </table></div>
+    {% if truncated %}<div class="pd-body"><p class="help">{{ truncated }}</p></div>{% endif %}
+    {% endif %}
+  </section>
+  <div class="pd-form-actions">
+    {% if importable %}<button class="button is-primary pd-touch" type="submit" name="step" value="import">{% include "ui/_icon.html" with name="check" %}<span>{{ importable }}</span></button>{% endif %}
+    <a href="{% url 'import:import' %}">{% translate "ui.forms.cancel" %}</a>
+  </div>
+</form>
+{% endif %}
+{% endblock content %}

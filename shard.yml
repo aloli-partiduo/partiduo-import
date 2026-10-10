@@ -1,0 +1,39 @@
+name: partiduo-import
+version: 0.1.0
+
+description: |
+  Extension d'import d'opérations en masse de Partiduo (ADR-003) :
+  écritures de tous les types de journaux (achats, ventes, financiers,
+  opérations diverses) depuis un CSV au format paramétrable enregistré, ou
+  depuis un fichier des écritures comptables (FEC) ; correspondance des
+  journaux, des codes de TVA, des comptes et des fiches de l'émetteur ;
+  aperçu à blanc, zone d'attente, doublons signalés, passage par le service
+  d'écriture de la Comptabilité, pièce source conservée en pièce jointe.
+
+authors:
+  - Philippe Nénert <it+claude.ai@aloli.fr>
+
+crystal: ">= 1.19.1"
+
+license: AGPL-3.0-or-later
+
+targets:
+  partiduo-import-manage:
+    main: manage.cr
+
+dependencies:
+  # Le cœur : registre, événements et contrat Partiduo::Api (Comptabilité,
+  # fiches, TVA, analytique, pièces jointes).
+  partiduo:
+    path: ../partiduo-app
+  marten:
+    path: ../../marten
+
+development_dependencies:
+  # L'interface qui monte ui/bulma/ : nécessaire aux specs et à manage.cr ;
+  # la distribution l'apporte elle-même.
+  partiduo-ui-bulma:
+    path: ../partiduo-ui-bulma
+  ameba:
+    github: crystal-ameba/ameba
+    version: "~> 1.6"
