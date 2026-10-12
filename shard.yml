@@ -1,5 +1,5 @@
 name: partiduo-import
-version: 0.1.0
+version: 0.1.1
 
 description: |
   Extension d'import d'opérations en masse de Partiduo (ADR-003) :
@@ -27,7 +27,7 @@ dependencies:
   partiduo:
     path: ../partiduo-app
   marten:
-    path: ../../marten
+    path: ../../prod-crystal/marten
 
 development_dependencies:
   # L'interface qui monte ui/bulma/ : nécessaire aux specs et à manage.cr ;
