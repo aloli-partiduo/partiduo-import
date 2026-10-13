@@ -204,7 +204,8 @@ module Import
       fatal = Importer.fatal(reading)
       return Result(BatchView).failure(fatal) unless fatal.empty?
       if !input.allow_same_file && (same = Importer.same_file(input.content))
-        date = (same.created_at || Time.utc).to_s("%Y-%m-%d")
+        # Date de l'import dans le fuseau du dossier, pas en UTC.
+        date = (same.created_at || Time.utc).in(Partiduo::Api::Core.time_zone).to_s("%Y-%m-%d")
         return Result(BatchView).failure(Records.error("content", "file.already_imported", {"date" => date, "id" => same.id.to_s}))
       end
       Transaction.run do

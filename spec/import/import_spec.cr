@@ -121,6 +121,10 @@ describe "Aperçu à blanc et zone d'attente d'un CSV (D-IMP-007)" do
     refused = Api.import_file(S.accountant, S.input("od.csv", format.id))
     refused.errors.map(&.key).should eq(["import.errors.file.already_imported"])
     refused.errors.first.params["id"].should eq(first.id.to_s)
+    # Date de l'import dans le fuseau du dossier : 23 h 30 UTC le 9 mars est
+    # le 10 mars à Paris.
+    Marten::DB::Connection.default.open(&.exec("UPDATE import_batch SET created_at = '2026-03-09 23:30:00+00' WHERE id = $1", first.id))
+    Api.import_file(S.accountant, S.input("od.csv", format.id)).errors.first.params["date"].should eq("2026-03-10")
     preview = Api.preview(S.accountant, S.input("od.csv", format.id)).value!
     preview.same_file_batch_id.should eq(first.id)
     preview.duplicate_count.should eq(2)
