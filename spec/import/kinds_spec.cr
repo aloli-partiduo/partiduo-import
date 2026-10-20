@@ -31,6 +31,47 @@ describe "Ventilation analytique et dossier foyer (D-IMP-002, D-IMP-013)" do
     distributions.first.rows.first.posts.map(&.id).should eq([post.id])
   end
 
+  it "ventile la contrepartie d'un extrait financier (Analytic.post_financial, D-IMP-018)" do
+    S.setup
+    plan = Partiduo::Api::Analytic.create_plan(S.system, Partiduo::Api::Analytic::PlanInput.new("Chantiers")).value!
+    post = Partiduo::Api::Analytic.create_post(S.system, Partiduo::Api::Analytic::PostInput.new(plan.id, "CH1")).value!
+    format = Api.create_format(S.accountant, Api::FormatInput.new(name: "Banque ventilée", ledger_kind: "financial",
+      ledger_id: S.ledger("F01").id, columns: %w[date receipt line_label account amount analytic])).value!
+    content = "Date;Pièce;Libellé;Contrepartie;Montant;Analytique\n06/09/2026;REL-7;Frais de tenue;627;-15,30;CH1\n"
+    batch = Api.import_file(S.accountant, Api::ImportInput.new(filename: "banque.csv", content: content.to_slice,
+      format_id: format.id)).value!
+    operation = S.operations(batch.id).first
+    operation.ready?.should be_true
+    entry_id = present(Api.transfer(S.importer, [operation.id]).value!.transferred.first.entry_id)
+    entry = Acc.entry(S.accountant, entry_id)
+    entry.external_reference.should eq("REL-7")
+    distributions = Partiduo::Api::Analytic.entry_distributions(S.accountant, entry_id)
+    distributions.size.should eq(1)
+    distributions.first.rows.first.posts.map(&.id).should eq([post.id])
+    counterpart = entry.lines.find! { |line| line.account_number == "627" }
+    distributions.first.entry_line_id.should eq(counterpart.id)
+  end
+
+  it "porte le code de TVA d'une opération diverse d'un CSV, rôle déduit du compte (D-IMP-017)" do
+    S.setup
+    format = Api.create_format(S.accountant, Api::FormatInput.new(name: "OD avec TVA", ledger_kind: "misc",
+      ledger_id: S.ledger("O01").id, columns: %w[date receipt account debit credit vat_code])).value!
+    content = "Date;Pièce;Compte;Débit;Crédit;TVA\n15/09/2026;P1;627;100,00;;NOR\n15/09/2026;P1;445661;20,00;;NOR\n" \
+              "15/09/2026;P1;510001;;120,00;\n"
+    batch = Api.import_file(S.accountant, Api::ImportInput.new(filename: "od.csv", content: content.to_slice,
+      format_id: format.id)).value!
+    operation = S.operations(batch.id).first
+    operation.ready?.should be_true
+    entry_id = present(Api.transfer(S.importer, [operation.id]).value!.transferred.first.entry_id)
+    lines = Acc.entry(S.accountant, entry_id).lines
+    lines.map { |line| {line.account_number, line.vat_rate_code, line.vat_role} }.sort_by!(&.[0]).should eq([
+      {"445661", "NOR", "tax"}, {"510001", nil, nil}, {"627", "NOR", "base"},
+    ])
+    bad = "Date;Pièce;Compte;Débit;Crédit;TVA\n15/09/2026;P1;627;100,00;;XX\n15/09/2026;P1;510001;;100,00;\n"
+    preview = Api.preview(S.importer, Api::ImportInput.new(filename: "od2.csv", content: bad.to_slice, format_id: format.id)).value!
+    preview.operations.first.problems.map(&.key).should eq(["import.errors.vat.unknown"])
+  end
+
   it "refuse la ventilation quand le module Analytique est inactif" do
     S.setup
     Partiduo::Api::Modules.deactivate(S.system, "ANALYTIC")

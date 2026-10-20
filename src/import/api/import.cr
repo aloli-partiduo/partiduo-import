@@ -178,7 +178,7 @@ module Import
       authorize!(actor, RUN)
       Guard.authorize!(actor, POST_PERMISSION)
       errors = [] of FieldError
-      reading = Importer.read(input, errors)
+      reading = Importer.read(actor, input, errors)
       return Result(PreviewView).failure(errors) unless errors.empty? && reading
       fatal = Importer.fatal(reading)
       return Result(PreviewView).failure(fatal) unless fatal.empty?
@@ -192,14 +192,15 @@ module Import
     #
     # Erreurs : `import.errors.file.*` (`blank`, `too_large`, `binary`,
     # `empty`, `malformed_csv`, `already_imported`, `too_many_rows`),
-    # `.fec.*`, `.format.*`, `.choice.invalid` ; celles du socle pour la
+    # `.format.*`, `.choice.invalid`, `.access.*` ; celles du lecteur FEC du
+    # cœur (`accounting.fec_reader.issues.*`) ; celles du socle pour la
     # pièce jointe.
     def self.import_file(actor : Actor, input : ImportInput) : Result(BatchView)
       authorize!(actor, RUN)
       Guard.authorize!(actor, ATTACHMENT_PERMISSION)
       Guard.authorize!(actor, POST_PERMISSION)
       errors = [] of FieldError
-      reading = Importer.read(input, errors)
+      reading = Importer.read(actor, input, errors)
       return Result(BatchView).failure(errors) unless errors.empty? && reading
       fatal = Importer.fatal(reading)
       return Result(BatchView).failure(fatal) unless fatal.empty?

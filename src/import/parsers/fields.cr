@@ -12,12 +12,13 @@ module Import
         credit quantity vat_code vat_amount amount_incl analytic]
 
       ALLOWED = {
-        "misc"     => %w[date ledger group receipt label currency due_date account line_label amount side debit credit analytic],
+        "misc" => %w[date ledger group receipt label currency due_date account line_label amount side debit credit vat_code
+          analytic],
         "purchase" => %w[date ledger group receipt label currency due_date third_party account line_label quantity amount
           vat_code vat_amount amount_incl analytic],
         "sale" => %w[date ledger group receipt label currency due_date third_party account line_label quantity amount
           vat_code vat_amount amount_incl analytic],
-        "financial" => %w[date ledger group receipt label currency account line_label amount],
+        "financial" => %w[date ledger group receipt label currency account line_label amount analytic],
       }
 
       REQUIRED = {

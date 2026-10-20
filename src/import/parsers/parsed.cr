@@ -2,16 +2,19 @@
 
 module Import
   # Lecture des fichiers d'opérations (D-IMP-005) : CSV au format enregistré
-  # et fichier des écritures comptables (FEC). Chaque lecteur rend un
-  # `Parsed` — opérations regroupées, anomalies — sans rien écrire. Montants
+  # et fichier des écritures comptables (FEC, lu par le lecteur commun du
+  # cœur, `FecFile`). Chaque lecture rend un `Parsed` — opérations
+  # regroupées, anomalies — sans rien écrire. Montants
   # en `BigDecimal`, jamais en flottant. Interne.
   module Parsers
     # Anomalie d'une ligne du fichier (`row` > 0) ou du fichier entier
     # (`row` = 0) : clé i18n complète et paramètres, comme
-    # `Partiduo::Api::FieldError`.
-    record Issue, row : Int32, key : String, params : Hash(String, String) = {} of String => String do
+    # `Partiduo::Api::FieldError`. `warning` : remarque qui n'empêche pas la
+    # lecture (encodage douteux d'un FEC), même sur le fichier entier.
+    record Issue, row : Int32, key : String, params : Hash(String, String) = {} of String => String,
+      warning : Bool = false do
       def fatal? : Bool
-        row.zero?
+        row.zero? && !warning
       end
 
       def to_error : Partiduo::Api::FieldError

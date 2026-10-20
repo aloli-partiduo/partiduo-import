@@ -38,13 +38,17 @@ l'application d'origine), séparateurs décimal et de milliers, rang de la
 colonne de chaque champ (date, journal, regroupement, pièce, libellé,
 devise, échéance, tiers, compte ou fiche, libellé de ligne, montant, sens,
 débit, crédit, quantité, code et montant de TVA, toutes taxes, postes
-analytiques).
+analytiques). Code de TVA admis en opérations diverses, postes
+analytiques en financier.
 
 |FEC
-|Zones lues par leur nom, tabulation, barre verticale ou point-virgule,
-encodage reconnu ; une écriture par journal et numéro d'écriture ; comptes
-auxiliaires vers les fiches ; comptes absents du plan créés *un par un, sur
-demande* ; reprise du lettrage (`EcritureLet`) ; écriture déjà reprise par
+|Lu par le lecteur commun du cœur (`Accounting.read_fec`) : zones lues par
+leur nom, tabulation, barre verticale ou point-virgule, encodage reconnu ;
+une écriture par journal et numéro d'écriture ; comptes auxiliaires vers
+les fiches ; comptes absents du plan créés *un par un, sur demande* ;
+taux et rôles de TVA d'une facture d'achat ou de vente retrouvés par les
+comptes de TVA du dossier et les montants (facture déclarable) ; reprise
+du lettrage (`EcritureLet`) ; écriture déjà reprise par
 `partiduo-migrate` signalée.
 
 |Correspondances
@@ -64,9 +68,10 @@ importé, écriture semblable déjà passée hors de l'extension.
 
 |Transfert
 |Une écriture par opération par `post_entry`, `post_purchase`, `post_sale`
-ou `post_financial` (variantes ventilées de l'analytique), avec l'acteur
-réel ; refus gardés sur l'opération ; extourne rendue à traiter
-(`entry.cancelled`).
+ou `post_financial` (variantes ventilées de l'analytique, extrait
+financier compris), avec l'acteur réel ; numérotation du cœur, pièce de
+l'émetteur gardée en référence de l'écriture ; refus gardés sur
+l'opération ; extourne rendue à traiter (`entry.cancelled`).
 
 |Historique
 |Imports, compteurs, anomalies de lecture, fichier d'origine
@@ -89,8 +94,8 @@ src/
     ├── app.cr, manifest.cr     # code IMPORT, permissions, menus, abonnement
     ├── models/                 # tables import_*
     ├── migrations/             # 0001 : tables et contraintes
-    ├── parsers/                # CSV, FEC, montants, dates, encodages, champs
-    ├── services/               # correspondances, essai à blanc, doublons, transfert, lettrage
+    ├── parsers/                # CSV, FEC lu par le cœur, montants, dates, encodages, champs
+    ├── services/               # correspondances, TVA d'un FEC, essai à blanc, doublons, transfert, lettrage
     ├── api/                    # contrat public Import::Api
     └── locales/                # fr, en, nl
 ui/
@@ -114,7 +119,9 @@ require "partiduo-import/ui/bulma"
 
 L'extension exige la Comptabilité (`depends_on "ACCOUNTING"`) ; elle
 s'active par dossier (`Partiduo::Api::Modules.activate`, écran « Modules »),
-dossier foyer compris.
+dossier foyer compris. Elle emploie le contrat 0.14.0 du cœur au moins
+(`read_fec`, `external_reference`, `EntryLineInput#vat_rate`,
+`Analytic.post_financial`) : cœur 0.1.30 ou suivant.
 
 == Développement local
 

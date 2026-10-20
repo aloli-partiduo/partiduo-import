@@ -19,7 +19,8 @@ module Import
       distributions = planned.distributions
       case planned.kind
       when "financial"
-        Acc.post_financial(actor, planned.financial.as(Acc::FinancialInput))
+        input = planned.financial.as(Acc::FinancialInput)
+        distributions.empty? ? Acc.post_financial(actor, input) : Analytic.post_financial(actor, input, distributions)
       when "purchase", "sale"
         input = planned.document.as(Acc::DocumentInput)
         single(if distributions.empty?

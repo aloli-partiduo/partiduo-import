@@ -33,8 +33,17 @@ encore retenu.
 * `import_file(actor, ImportInput) : Result(BatchView)` — pièce jointe,
   opérations à traiter vérifiées, doublons mis de côté. Erreurs :
   `file.blank|too_large|binary|empty|filename_blank|malformed_csv|
-  already_imported|too_many_rows`, `fec.separator|columns`,
-  `format.blank|unknown`, `choice.invalid` ; celles du socle pour la pièce.
+  already_imported|too_many_rows`, `format.blank|unknown`,
+  `choice.invalid`, `access.module|forbidden` ; celles du lecteur FEC du
+  cœur (`accounting.fec_reader.issues.*`) ; celles du socle pour la pièce.
+* Un FEC est lu par `Partiduo::Api::Accounting.read_fec` en lecture
+  souple (tabulation, barre verticale ou point-virgule ; zones
+  `JournalCode`, `EcritureNum`, `EcritureDate`, `CompteNum` et montants
+  exigées), avec l'acteur (D-IMP-016). Un défaut d'en-tête ou d'encodage
+  refuse le fichier ; un défaut de ligne est rendu avec le fichier
+  (`issues`, `rows[<ligne>]`) et bloque l'opération qui contenait la ligne.
+  Les anomalies des imports antérieurs (`fec.*`, `line.*`) restent
+  traduites.
 * `ImportInput` : `filename`, `content` (octets), `kind` (`auto`, `csv`,
   `fec`), `format_id` (CSV), `ledger_id` (CSV sans colonne de journal),
   `encoding` (FEC, `auto`), `allow_same_file`.
@@ -47,12 +56,18 @@ encore retenu.
 * `check(actor, ids = nil) : Result(CheckReportView)` — nouvel essai à
   blanc des opérations à traiter.
 * `transfer(actor, ids) : Result(TransferReportView)` — une écriture par
-  opération ; `source` = `import:operation:<id>` ; refus gardés
-  (`problems`). Motifs propres : `ledger.blank|unknown|kind|not_writable`,
+  opération ; `source` = `import:operation:<id>` ; pièce de l'émetteur en
+  `external_reference` de l'écriture (D-IMP-015 ; la pièce du journal est
+  numérotée par le cœur, `posted_receipt`) ; TVA des lignes d'une écriture
+  de FEC passée en journal d'achats ou de ventes, retrouvée par les comptes
+  de TVA et les montants, et code de TVA d'une opération diverse d'un CSV
+  (`EntryLineInput#vat_rate`, D-IMP-017) ; extrait financier ventilé par
+  `Analytic.post_financial` (D-IMP-018) ; refus gardés (`problems`). Motifs propres : `ledger.blank|unknown|kind|not_writable`,
   `operation.no_line|single_line|unbalanced|financial_lines|not_pending|
   none_selected`, `code.unknown|unknown_account`,
   `third_party.blank|not_card`, `vat.unknown`,
-  `analytic.inactive|financial|unknown|ambiguous`,
+  `analytic.inactive|unknown|ambiguous` (`analytic.financial` : motif
+  retiré, encore lu sur les opérations vérifiées avant 0.1.4),
   `access.forbidden|module` ; et ceux de la Comptabilité
   (`accounting.errors.*`).
 * `discard`, `restore` (nouvelle vérification), `purge`.
@@ -63,7 +78,9 @@ encore retenu.
 == Formats et correspondances
 
 * `FormatInput` : `name`, `ledger_kind` (`purchase`, `sale`, `financial`,
-  `misc`), `columns` (clé du champ de chaque colonne, `""` ignorée),
+  `misc`), `columns` (clé du champ de chaque colonne, `""` ignorée ;
+  `vat_code` admis en opérations diverses, `analytic` en financier depuis
+  0.1.4),
   `description`, `ledger_id`, `separator`, `quote`, `encoding`,
   `skip_lines`, `date_format`, `decimal_separator`, `thousands_separator`.
   Erreurs : `format.name.*`, `format.description.too_long`,

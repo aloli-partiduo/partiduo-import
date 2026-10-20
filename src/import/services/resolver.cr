@@ -34,6 +34,7 @@ module Import
     @accounts = {} of String => Bool
     @rates = {} of String => String?
     @posts : Array(Analytic::PostView)?
+    @vat_table : Hash(String, Array(FecVat::Rate))?
 
     # `kind` : genre du fichier (`csv`, `fec`) ; `ledger_kind` : genre de
     # journal d'un CSV ; `default_ledger_id` : journal d'un CSV sans
@@ -99,16 +100,21 @@ module Import
 
     private def entry(operation : Parsers::ParsedOperation, ledger : Acc::LedgerView?, errors : Array(FieldError),
                       source : String, attachment_id : Int64?) : Planned?
-      lines = [] of Acc::EntryLineInput
+      targets = [] of {Int32, Target}
       zero = BigDecimal.new(0)
       operation.lines.each_with_index do |line, index|
         target = @kind == "fec" ? fec_target(line, index, errors) : code_target(line.code, "", "lines[#{index}].code", errors)
+        targets << {index, target} if target
+      end
+      vat = entry_vat(operation, ledger, targets, errors)
+      lines = targets.map do |(index, target)|
+        line = operation.lines[index]
         side = line.debit? ? Acc::Side::Debit : Acc::Side::Credit
-        next if target.nil?
-        lines << if target.type == "card"
-          Acc::EntryLineInput.new("", side, line.amount, card: target.value, label: line.label)
+        rate, role = vat[index]? || {nil, nil}
+        if target.type == "card"
+          Acc::EntryLineInput.new("", side, line.amount, card: target.value, label: line.label, vat_rate: rate, vat_role: role)
         else
-          Acc::EntryLineInput.new(target.value, side, line.amount, label: line.label)
+          Acc::EntryLineInput.new(target.value, side, line.amount, label: line.label, vat_rate: rate, vat_role: role)
         end
       end
       if operation.lines.size < 2
@@ -125,8 +131,35 @@ module Import
       return unless errors.empty? && ledger
       input = Acc::EntryInput.new(ledger_id: ledger.id, date: operation.date, lines: lines, label: label(operation),
         due_date: operation.due_date, currency_code: operation.currency.presence, attachment_id: attachment_id,
-        source: source)
+        source: source, external_reference: operation.receipt)
       Planned.new("entry", ledger, entry: input, distributions: distributions)
+    end
+
+    # TVA des lignes saisies (D-IMP-017), par rang de ligne : code de TVA
+    # d'une opération diverse d'un CSV (rôle déduit du compte par la
+    # Comptabilité) ; taux et rôle retrouvés pour une écriture de FEC passée
+    # dans un journal d'achats ou de ventes (`FecVat`).
+    private def entry_vat(operation : Parsers::ParsedOperation, ledger : Acc::LedgerView?, targets : Array({Int32, Target}),
+                          errors : Array(FieldError)) : Hash(Int32, {String?, String?})
+      found = {} of Int32 => {String?, String?}
+      if @kind == "fec"
+        return found unless ledger && ledger.kind.code.in?("purchase", "sale")
+        lines = targets.map do |(index, target)|
+          line = operation.lines[index]
+          FecVat::Line.new(index, target.type == "account" ? target.value : nil, line.debit? ? line.amount : -line.amount)
+        end
+        FecVat.assign(lines, vat_table).each { |index, (code, role)| found[index] = {code, role} }
+      else
+        operation.lines.each_with_index do |line, index|
+          rate = vat_rate(line.vat_code, "lines[#{index}].vat_code", errors) || next
+          found[index] = {rate, nil}
+        end
+      end
+      found
+    end
+
+    private def vat_table : Hash(String, Array(FecVat::Rate))
+      @vat_table ||= FecVat.table(@actor)
     end
 
     # Ligne d'un FEC : le compte auxiliaire désigne la fiche (ou le compte
@@ -206,7 +239,7 @@ module Import
       return unless errors.empty? && ledger && third
       input = Acc::DocumentInput.new(ledger_id: ledger.id, date: operation.date, third_party: third.value, lines: lines,
         label: label(operation), due_date: operation.due_date, currency_code: operation.currency.presence,
-        attachment_id: attachment_id, source: source)
+        attachment_id: attachment_id, source: source, external_reference: operation.receipt)
       Planned.new(@ledger_kind, ledger, document: input, distributions: distributions)
     end
 
@@ -228,24 +261,25 @@ module Import
     private def financial(operation : Parsers::ParsedOperation, ledger : Acc::LedgerView?, errors : Array(FieldError),
                           source : String, attachment_id : Int64?) : Planned?
       errors << error("lines", "operation.financial_lines") if operation.lines.size > 1
-      unless operation.lines.all?(&.analytic.empty?)
-        errors << error("lines", "analytic.financial")
-      end
       lines = operation.lines.each_with_index.compact_map do |line, index|
         target = code_target(line.code, "", "lines[#{index}].code", errors) || next
         Acc::PaymentLineInput.new(line.amount, card: target.type == "card" ? target.value : nil,
           account: target.type == "account" ? target.value : nil, label: line.label.presence || label(operation))
       end.to_a
+      distributions = distributions(operation, errors)
       return unless errors.empty? && ledger
       input = Acc::FinancialInput.new(ledger_id: ledger.id, date: operation.date, lines: lines,
-        currency_code: operation.currency.presence, attachment_id: attachment_id, source: source)
-      Planned.new("financial", ledger, financial: input)
+        currency_code: operation.currency.presence, attachment_id: attachment_id, source: source,
+        external_reference: operation.receipt)
+      Planned.new("financial", ledger, financial: input, distributions: distributions)
     end
 
     # --- Analytique --------------------------------------------------------------------
 
     # Ventilation de chaque ligne entière : un poste par plan, désignés par
-    # leur code (séparés par une espace, `/`, `|` ou `;`).
+    # leur code (séparés par une espace, `/`, `|` ou `;`). Extrait financier :
+    # la ligne est la contrepartie de l'écriture (`Analytic.post_financial`,
+    # D-IMP-018).
     private def distributions(operation : Parsers::ParsedOperation,
                               errors : Array(FieldError)) : Array(Analytic::InputDistributionInput)
       list = [] of Analytic::InputDistributionInput

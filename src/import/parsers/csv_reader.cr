@@ -148,9 +148,11 @@ module Import
       end
 
       # Opérations diverses : montant et sens (un montant négatif inverse le
-      # sens), ou débit moins crédit.
+      # sens), ou débit moins crédit ; code de TVA facultatif de la ligne
+      # (D-IMP-017).
       private def self.misc_amounts(line : ParsedLine, row : Row) : Nil
         zero = BigDecimal.new(0)
+        line.vat_code = Parsers.clean(row["vat_code"], 20)
         if row.has?("amount")
           value = row.amount("amount", required: true) || zero
           side = Parsers.side(row["side"])

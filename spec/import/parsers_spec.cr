@@ -9,7 +9,7 @@ private def settings(kind : String, columns : Array(String), **options) : P::Csv
   P::CsvSettings.new(**options.merge(ledger_kind: kind, columns: columns))
 end
 
-describe "Lecture des fichiers d'opérations (D-IMP-005, D-IMP-011)" do
+describe "Lecture des fichiers d'opérations CSV (D-IMP-005)" do
   it "lit les montants en BigDecimal, séparateurs et signes compris" do
     P::Amounts.parse("1 234,56", ',', ' ').should eq(S.d("1234.56"))
     P::Amounts.parse("1.234,56", ',', '.').should eq(S.d("1234.56"))
@@ -84,29 +84,6 @@ describe "Lecture des fichiers d'opérations (D-IMP-005, D-IMP-011)" do
     P::CsvReader.parse("a;\"b\n".to_slice, settings("misc", %w[date])).fatal?.should be_true
   end
 
-  it "lit un FEC : zones par leur nom, ISO 8859-15, lignes groupées par journal et numéro d'écriture" do
-    parsed = P::FecReader.parse(S.fixture(S::FEC))
-    parsed.issues.should be_empty
-    parsed.encoding.should eq("iso-8859-15")
-    parsed.operations.map { |operation| {operation.ledger_code, operation.group_key, operation.lines.size} }.should eq([
-      {"VT", "VT1", 3}, {"BQ", "BQ1", 2}, {"OD", "OD1", 2},
-    ])
-    sale = parsed.operations.first
-    sale.receipt.should eq("F2026-1")
-    line = sale.lines.first
-    {line.code, line.aux, line.aux_label, line.side, line.amount, line.letter}.should eq({"411000", "CLI01", "Client Un", "debit", S.d("1200"), "A"})
-    sale.lines[2].code_label.should eq("TVA collectée")
-  end
-
-  it "accepte Montant et Sens, la barre verticale, et signale un en-tête incomplet" do
-    content = "JournalCode|EcritureNum|EcritureDate|CompteNum|EcritureLib|Montant|Sens\nOD|1|20260901|627|X|10,00|D\nOD|1|20260901|510001|X|10,00|C\n"
-    parsed = P::FecReader.parse(content.to_slice)
-    parsed.operations.first.lines.map(&.side).should eq(%w[debit credit])
-    P::FecReader.parse("JournalCode\tEcritureNum\n".to_slice).issues.map(&.key).should eq(["import.errors.fec.columns"])
-    short = "JournalCode\tEcritureNum\tEcritureDate\tCompteNum\tDebit\tCredit\nOD\t1\t20260901\t627\t10\n"
-    P::FecReader.parse(short.to_slice).issues.map(&.key).should eq(["import.errors.fec.field_count"])
-  end
-
   it "contrôle la correspondance des colonnes selon le genre de journal" do
     errors = ->(kind : String, columns : Array(String)) { P::Fields.errors(kind, columns).map(&.key.split('.').last) }
     errors.call("misc", %w[date account amount side]).should be_empty
@@ -114,6 +91,8 @@ describe "Lecture des fichiers d'opérations (D-IMP-005, D-IMP-011)" do
     errors.call("misc", %w[date account amount]).should eq(["missing"])
     errors.call("misc", %w[date account amount side debit credit]).should eq(["amount_both"])
     errors.call("financial", %w[date account amount vat_code]).should eq(["not_allowed"])
+    errors.call("financial", %w[date account amount analytic]).should be_empty
+    errors.call("misc", %w[date account amount side vat_code]).should be_empty
     errors.call("purchase", %w[date date account amount]).should eq(["repeated", "missing"])
   end
 end

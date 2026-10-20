@@ -68,6 +68,7 @@ fr:
       utf-8: "UTF-8"
       windows-1252: "Windows-1252"
       iso-8859-15: "ISO 8859-15 (Latin-9)"
+      utf-16: "UTF-16"
     decimal_separators:
       comma: "Virgule (1234,56)"
       dot: "Point (1234.56)"
@@ -92,6 +93,8 @@ fr:
         malformed_csv: "Fichier CSV illisible : %{detail}"
         too_many_rows: "Le fichier dépasse %{max} lignes."
         already_imported: "Ce fichier a déjà été importé le %{date} (import n° %{id})."
+      # Lecteur FEC propre retiré (D-IMP-016) : clés gardées pour les
+      # anomalies enregistrées par les imports déjà faits.
       fec:
         separator: "En-tête du FEC sans séparateur reconnu (tabulation, barre verticale ou point-virgule)."
         columns: "Zones manquantes dans l'en-tête du FEC : %{columns}."
@@ -148,6 +151,7 @@ fr:
       vat:
         unknown: "Code de TVA %{code} inconnu : ajoutez sa correspondance."
       analytic:
+        # Refus retiré (D-IMP-018), gardé pour les motifs déjà enregistrés.
         financial: "La ventilation analytique ne s'importe pas dans un journal financier."
         inactive: "Le module Analytique n'est pas actif : retirez les postes analytiques."
         unknown: "Poste analytique %{code} inconnu."

@@ -68,6 +68,7 @@ en:
       utf-8: "UTF-8"
       windows-1252: "Windows-1252"
       iso-8859-15: "ISO 8859-15 (Latin-9)"
+      utf-16: "UTF-16"
     decimal_separators:
       comma: "Comma (1234,56)"
       dot: "Dot (1234.56)"
@@ -92,6 +93,8 @@ en:
         malformed_csv: "Unreadable CSV file: %{detail}"
         too_many_rows: "The file exceeds %{max} lines."
         already_imported: "This file was already imported on %{date} (import #%{id})."
+      # Lecteur FEC propre retiré (D-IMP-016) : clés gardées pour les
+      # anomalies enregistrées par les imports déjà faits.
       fec:
         separator: "FEC header without a recognised separator (tab, vertical bar or semicolon)."
         columns: "Missing fields in the FEC header: %{columns}."
@@ -148,6 +151,7 @@ en:
       vat:
         unknown: "Unknown VAT code %{code}: add its mapping."
       analytic:
+        # Refus retiré (D-IMP-018), gardé pour les motifs déjà enregistrés.
         financial: "Analytic distribution is not imported into a financial ledger."
         inactive: "The Analytic module is not active: remove the analytic posts."
         unknown: "Unknown analytic post %{code}."

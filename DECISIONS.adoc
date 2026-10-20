@@ -81,8 +81,8 @@ traiter avec ses motifs ; rien d'office (D-IMP-007)
 
 |Pièce du fichier reprise comme numéro de pièce, sinon pièce suivante
 |Adapté
-|Numérotation du cœur toujours ; la pièce de l'émetteur reste sur
-l'opération (D-IMP-007, amendement A-IMP-2)
+|Numérotation du cœur toujours ; la pièce de l'émetteur devient la
+référence de l'écriture (`external_reference`, D-IMP-015)
 
 |Date de paiement (`jr_date_paid`) d'une facture
 |Refusé
@@ -97,8 +97,8 @@ de `EntryInput`) ; pas de montant en devise distinct
 |Import analytique : fichier à part, joint par une référence analytique
 |Adapté
 |Colonne « postes analytiques » par ligne : ligne entière, un poste par
-plan, par `Partiduo::Api::Analytic.post_*` (D-IMP-013) ; refusé en
-journal financier (amendement A-IMP-3)
+plan, par `Partiduo::Api::Analytic.post_*` (D-IMP-013), extrait financier
+compris (D-IMP-018)
 
 |Libellé de fiche par ligne (`id_cardlabel`)
 |Porté
@@ -107,7 +107,8 @@ journal financier (amendement A-IMP-3)
 |Import FEC (tabulation ou point-virgule, encodage, contrôle de
 l'équilibre et de la date unique, comptes existants)
 |Porté
-|Lecteur FEC de l'extension (D-IMP-011)
+|Lecteur FEC commun du cœur, `Accounting.read_fec` (D-IMP-016) ; TVA des
+factures retrouvée (D-IMP-017)
 
 |FEC : création automatique des comptes manquants
 |Adapté
@@ -317,6 +318,7 @@ embarque ses traductions et dépend de `pg` pour lire la base d'origine.
   `Sens`, soldes d'une ligne, ligne nulle ignorée, échéance facultative,
   devise non reprise), sans dépendre d'un outil en ligne de commande. Un
   lecteur commun est proposé au contrat (A-IMP-4).
+  _Remplacé le 20 octobre 2026 par le lecteur commun du cœur (D-IMP-016)._
 
 *Alternative écartée.* Dépendre de `partiduo-migrate` comme d'une
 bibliothèque : il n'en est pas une (point d'entrée de commande, traductions
@@ -340,7 +342,8 @@ Comptabilité est rendu avec le code de lettrage.
 `Partiduo::Api::Analytic.post_entry`, `post_purchase` ou `post_sale`
 (`InputDistributionInput#post_ids`). Code inconnu ou présent dans plusieurs
 plans : motif nommé. Module inactif : refusé. Journal financier : refusé
-(pas de variante ventilée de `post_financial`, amendement A-IMP-3).
+(pas de variante ventilée de `post_financial`, amendement A-IMP-3) —
+_ventilé depuis le 20 octobre 2026 (D-IMP-018)._
 
 *Alternative écartée.* Le second fichier legacy joint par une référence
 analytique : deux fichiers à garder cohérents pour une même écriture.
@@ -357,12 +360,189 @@ nécessaire à cette version ; il resterait admis pour une correspondance
 des colonnes par glisser-déposer sur un fichier d'exemple
 (`Api.sample` le prépare).
 
+=== D-IMP-015 — Pièce de l'émetteur sur l'écriture (20 octobre 2026)
+
+*Contexte.* Amendement A-IMP-2, adopté (D-AMD-018 du cœur) :
+`external_reference` d'`EntryInput`, `DocumentInput` et `FinancialInput`,
+rendue par `EntryView#external_reference` et cherchée comme la pièce.
+
+*Choix.* Le transfert pose la pièce de l'émetteur (`PieceRef` d'un FEC,
+colonne « pièce » d'un CSV) en `external_reference` de chaque écriture,
+pour tous les genres (`post_entry`, `post_purchase`, `post_sale`,
+`post_financial` et leurs variantes ventilées). La pièce du journal reste
+numérotée par le cœur (`posted_receipt`). L'opération de l'extension garde
+la pièce lue (`receipt`) : c'est la donnée de la zone d'attente, de
+l'empreinte des doublons (D-IMP-008) et de l'aperçu.
+
+*Compatibilité.* Les écritures transférées avant cette version n'ont pas
+de référence (le contrat n'offre pas de la poser après coup) : leur pièce
+d'émetteur reste lisible sur l'opération (`OperationView#receipt`, écran du
+détail de l'import), inchangée. Aucune migration.
+
+=== D-IMP-016 — Lecteur FEC commun du cœur (20 octobre 2026)
+
+*Contexte.* Amendement A-IMP-4, adopté (D-AMD-020 du cœur) :
+`Partiduo::Api::Accounting.read_fec(actor, bytes, encoding, strict)`, qui
+réunit les règles des lecteurs de `partiduo-migrate` et de l'extension.
+
+*Choix.* Le lecteur propre (`Parsers::FecReader`) et ses specs sont
+supprimés. L'import lit le FEC par `read_fec` en lecture *souple* (zones
+minimales, point-virgule admis), avec l'acteur réel (Comptabilité
+active ; sinon motif `access.module`), puis `Parsers::FecFile` traduit le
+`FecFileView` en opérations de la zone d'attente. Les règles d'import ne
+changent pas (D-IMP-011) : correspondances, comptes créés sur demande,
+lettrage, écriture reprise par `partiduo-migrate` reconnue. Les défauts du
+lecteur gardent leur clé (`accounting.fec_reader.issues.*`, traduite par
+le cœur en fr, en, nl) :
+
+* en-tête, encodage, fichier vide ou sans écriture : le fichier est
+  refusé, comme avant ;
+* défaut d'une ligne : le lecteur commun l'écarte ; elle est signalée avec
+  le fichier *et* bloque l'opération qui la contenait (celle que le défaut
+  nomme, sinon celle dont les lignes l'encadrent) — une écriture amputée
+  d'une ligne ne passe jamais (D-IMP-005) ;
+* écriture déséquilibrée : le défaut `unbalanced` du lecteur est laissé à
+  l'import, qui la refuse avec son motif nommé (`operation.unbalanced`,
+  débit, crédit, écart).
+
+*Comparaison et écarts visibles par l'utilisateur.*
+
+[cols="2,2,2",options="header"]
+|===
+|Règle |Lecteur propre (jusqu'à 0.1.3) |Lecteur commun
+
+|Séparateur
+|tabulation, barre verticale, point-virgule
+|identique (lecture souple)
+
+|Zones exigées
+|`JournalCode`, `EcritureNum`, `EcritureDate`, `CompteNum`, montants
+|identique
+
+|Encodage reconnu
+|UTF-8, sinon Windows-1252 si octets 0x80-0x9F, sinon ISO 8859-15
+|même résultat ; en plus BOM UTF-16 ; avertissement « caractères de
+contrôle » rendu avec le fichier
+
+|UTF-8 imposé mais invalide
+|caractères remplacés
+|*fichier refusé* (`invalid_utf8`)
+
+|Montants
+|`Amounts.parse` : parenthèses, signe final, symbole de devise admis
+|virgule ou point, blancs, `+`, `1.234,56` ; *parenthèses, signe final
+et symbole refusés* (`unreadable_amount`)
+
+|`Sens`
+|`D`, `C`, débit, crédit (fr, en, nl), `+1`, `1`, `-1`, `+`, `-`
+|`D`, `C`, `+1`, `1`, `-1`, `DEBIT`, `CREDIT` ; *`+`, `-`, `débit`,
+`debet` refusés*
+
+|Dates
+|`AAAAMMJJ`, `AAAA-MM-JJ`
+|en plus `JJ/MM/AAAA`
+
+|Zones lues en plus
+|—
+|`PieceDate`, `DateLet`, `ValidDate`, `Montantdevise` : une valeur
+*illisible* écarte désormais la ligne (défaut), là où elle était ignorée
+
+|Messages
+|`import.errors.fec.*`, `import.errors.line.*`
+|`accounting.fec_reader.issues.*` (ligne et zone en cause)
+
+|Encodage affiché
+|`utf-8`, `windows-1252`, `iso-8859-15`
+|identique ; `utf-16` en plus
+|===
+
+*Compatibilité.* Les anomalies enregistrées par les imports déjà faits
+(`import_batch.issues`, `import_operation.read_problems`) citent les clés
+`import.errors.fec.*` et `import.errors.line.*` : elles restent traduites
+(clés gardées dans les trois langues). Rien n'est relu ni migré : une
+opération déjà en attente garde ses lignes, vérifiées comme avant.
+
+=== D-IMP-017 — TVA des écritures saisies ligne à ligne (20 octobre 2026)
+
+*Contexte.* Amendement A-IMP-1, adopté (D-AMD-017 du cœur) :
+`EntryLineInput#vat_rate` et `#vat_role` ; rôle omis déduit du compte
+(`tax` pour un compte de TVA du taux, `base` sinon).
+
+*Choix.*
+
+* *FEC* : une écriture passée dans un journal d'*achats* ou de *ventes*
+  reçoit les taux et rôles de TVA de ses lignes (`FecVat`) ; la facture
+  devient déclarable (déclarations, `vat_totals`). Un FEC n'a ni code ni
+  rôle de TVA ; on les retrouve sans rien deviner :
+  . *ligne de taxe* : son compte (après correspondance) est le compte de
+    TVA déductible ou collectée d'un taux actif non nul, d'après la table
+    des comptes de TVA du dossier (`Accounting.vat_rate_accounts`) ; un
+    compte partagé par plusieurs taux les propose tous ;
+  . *base possible* : ligne de compte (pas de fiche) des classes 2, 6 ou 7
+    (immobilisations, charges, produits : mêmes classes dans les plans
+    français et belge) ;
+  . on retient l'affectation des lignes de taxe à leurs taux et des bases
+    à l'un de ces taux ou à aucun (base exonérée) telle que, pour chaque
+    taux, base × taux = taxe à un centime par ligne de base près (un
+    logiciel arrondit ligne à ligne), et qui laisse le moins de bases sans
+    taux. Taxe d'un taux autoliquidé : le plus grand des deux côtés.
+  +
+  Une seule meilleure affectation : appliquée, rôles explicites (`tax`,
+  `base`). Aucune, plusieurs (montants qui ne tranchent pas, par exemple
+  deux bases égales pour deux taux), plus de 4 096 combinaisons, TVA
+  inactive ou illisible pour l'acteur : l'écriture passe *sans* TVA, comme
+  avant — jamais un refus, un FEC accepté jusqu'ici l'est encore.
+  Journal d'opérations diverses ou financier : jamais de TVA (une
+  liquidation de TVA mouvemente les comptes de TVA sans être une
+  facture ; la compter la déclarerait deux fois).
+* *CSV d'opérations diverses* : colonne facultative « code de TVA »
+  (`vat_code`), traduite par les correspondances de genre `vat`
+  (D-IMP-006) ; le rôle est laissé à la Comptabilité, qui le déduit du
+  compte.
+* *CSV d'achats et de ventes* : gardés. Ils restent la voie complète d'une
+  facture (tiers, articles, code de TVA par ligne, montant de TVA calculé
+  ou donné, échéance) et la seule pour un fichier qui n'a pas la ligne de
+  TVA ou dont les montants ne permettent pas de trancher.
+
+*Alternatives écartées.* Un taux par correspondance de compte : le compte
+de TVA dit déjà le taux, la table du dossier suffit. Le taux par défaut
+de la fiche ou du compte de charge : une base peut être exonérée, ou à un
+autre taux que d'habitude ; seuls les montants l'attestent. Le rôle laissé
+au cœur pour un FEC : le cœur exige le taux, que seule l'affectation donne
+aux bases.
+
+*Compatibilité.* Les écritures déjà transférées ne sont pas reprises :
+elles restent sans TVA ; une opération encore en attente reçoit la TVA à
+son transfert.
+
+=== D-IMP-018 — Extrait financier ventilé (20 octobre 2026)
+
+*Contexte.* Amendement A-IMP-3, adopté (D-AMD-019 du cœur) :
+`Analytic.post_financial(actor, FinancialInput, distributions)`, où
+`input_index` désigne la ligne de l'extrait et la ventilation porte sur
+la contrepartie.
+
+*Choix.* La colonne « postes analytiques » est admise par le format de
+genre `financial` ; un extrait ventilé passe par
+`Analytic.post_financial` (droit `analytic.operation.write`), sinon par
+`Accounting.post_financial` comme avant. Le refus `analytic.financial` est
+retiré.
+
+*Compatibilité.* Une opération refusée avec `analytic.financial` le reste
+jusqu'à sa prochaine vérification, qui la rend transférable ; la clé est
+gardée dans les trois langues pour les motifs enregistrés. Les formats
+existants ne changent pas.
+
 == Amendements proposés au contrat du cœur
 
-À soumettre à l'utilisateur ; l'extension les contourne sans modifier
-`partiduo-app`. Aucun nouvel événement n'est demandé à ADR-003 D7.
+Proposés le 10 octobre 2026, adoptés le 13 octobre 2026 (ADR-003,
+« Amendements adoptés le 13 octobre 2026 » ; D-AMD-017 à D-AMD-020 du
+cœur, contrat 0.14.0), réalisés le 20 octobre 2026 (D-IMP-015 à
+D-IMP-018). Texte d'origine conservé, contournements compris. Aucun nouvel événement n'est demandé à ADR-003 D7.
 
 A-IMP-1 — Code de TVA d'une ligne d'écriture saisie (`Accounting::EntryLineInput`)::
+  _Adopté (D-AMD-017 du cœur, contrat 0.14.0). Réalisé le 20 octobre
+  2026 : D-IMP-017._
   Un champ `vat_rate` (et le rôle de la ligne) permettrait à `post_entry`
   d'écrire des lignes de TVA reconnues par la déclaration. Aujourd'hui une
   écriture d'achats ou de ventes reprise d'un FEC passe en lignes de
@@ -371,18 +551,22 @@ A-IMP-1 — Code de TVA d'une ligne d'écriture saisie (`Accounting::EntryLineIn
   (`post_purchase`, `post_sale`), qui porte les codes de TVA.
 
 A-IMP-2 — Référence de l'émetteur sur une écriture (`EntryInput`, `DocumentInput`, `FinancialInput`)::
+  _Adopté (D-AMD-018 du cœur). Réalisé le 20 octobre 2026 : D-IMP-015._
   Un champ `external_reference` (pièce du logiciel d'origine), affiché et
   cherché comme la pièce, garderait sur l'écriture le numéro de l'émetteur
   sans renoncer à la numérotation du cœur. Contournement : la pièce de
   l'émetteur reste sur l'opération de l'extension, liée à l'écriture.
 
 A-IMP-3 — Ventilation d'un extrait financier (`Analytic.post_financial`)::
+  _Adopté (D-AMD-019 du cœur). Réalisé le 20 octobre 2026 : D-IMP-018._
   Variante ventilée de `post_financial`, comme `post_entry`,
   `post_purchase` et `post_sale`. Contournement : la ventilation est
   refusée en journal financier (motif `analytic.financial`) ; on ventile
   ensuite par `distribute_entry`.
 
 A-IMP-4 — Lecteur FEC commun (`Partiduo::Api::Accounting.read_fec`)::
+  _Adopté (D-AMD-020 du cœur). Réalisé le 20 octobre 2026 : D-IMP-016 (et
+  dans `partiduo-migrate`)._
   Le cœur exporte déjà le FEC (`Accounting.fec`) ; un lecteur dans son
   contrat (lignes, écritures, défauts) servirait `partiduo-migrate` et
   `partiduo-import`, qui en ont chacun un aujourd'hui. Contournement :

@@ -21,14 +21,14 @@ module Import
 
     # Lit le fichier selon son genre et son format ; erreurs de saisie
     # dans `errors`.
-    def self.read(input : Api::ImportInput, errors : Array(FieldError)) : Reading?
+    def self.read(actor : Partiduo::Api::Actor, input : Api::ImportInput, errors : Array(FieldError)) : Reading?
       return unless content_ok?(input, errors)
       kind = input.kind == "auto" ? detect_kind(input.content) : input.kind
       unless Api::KINDS.includes?(kind)
         errors << Records.error("kind", "choice.invalid", {"value" => input.kind})
         return
       end
-      kind == "fec" ? read_fec(input, errors) : read_csv(input, errors)
+      kind == "fec" ? read_fec(actor, input, errors) : read_csv(input, errors)
     end
 
     # Fichier non vide, texte, de taille admise, nommé.
@@ -44,12 +44,22 @@ module Import
       errors.empty?
     end
 
-    private def self.read_fec(input : Api::ImportInput, errors : Array(FieldError)) : Reading?
+    # FEC lu par le lecteur commun du cœur (D-IMP-016), en lecture souple :
+    # zones minimales, point-virgule admis.
+    private def self.read_fec(actor : Partiduo::Api::Actor, input : Api::ImportInput,
+                              errors : Array(FieldError)) : Reading?
       unless input.encoding == "auto" || Api::ENCODINGS.includes?(input.encoding)
         errors << Records.error("encoding", "choice.invalid", {"value" => input.encoding})
         return
       end
-      Reading.new("fec", "", nil, Parsers::FecReader.parse(input.content, input.encoding))
+      view = Partiduo::Api::Accounting.read_fec(actor, input.content, Parsers::FecFile.encoding(input.encoding))
+      Reading.new("fec", "", nil, Parsers::FecFile.parsed(view))
+    rescue ex : Partiduo::Api::ModuleDisabled
+      errors << Records.error("content", "access.module", {"module" => ex.module_code})
+      nil
+    rescue ex : Partiduo::Api::AccessDenied
+      errors << Records.error("content", "access.forbidden", {"permission" => ex.as?(Partiduo::Api::Forbidden).try(&.permission).to_s})
+      nil
     end
 
     private def self.read_csv(input : Api::ImportInput, errors : Array(FieldError)) : Reading?

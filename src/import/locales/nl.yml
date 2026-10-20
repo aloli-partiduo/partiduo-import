@@ -68,6 +68,7 @@ nl:
       utf-8: "UTF-8"
       windows-1252: "Windows-1252"
       iso-8859-15: "ISO 8859-15 (Latin-9)"
+      utf-16: "UTF-16"
     decimal_separators:
       comma: "Komma (1234,56)"
       dot: "Punt (1234.56)"
@@ -92,6 +93,8 @@ nl:
         malformed_csv: "Onleesbaar CSV-bestand: %{detail}"
         too_many_rows: "Het bestand telt meer dan %{max} lijnen."
         already_imported: "Dit bestand werd al geïmporteerd op %{date} (import nr. %{id})."
+      # Lecteur FEC propre retiré (D-IMP-016) : clés gardées pour les
+      # anomalies enregistrées par les imports déjà faits.
       fec:
         separator: "FEC-hoofding zonder herkend scheidingsteken (tab, verticale streep of puntkomma)."
         columns: "Ontbrekende zones in de FEC-hoofding: %{columns}."
@@ -148,6 +151,7 @@ nl:
       vat:
         unknown: "Onbekende btw-code %{code}: voeg de koppeling toe."
       analytic:
+        # Refus retiré (D-IMP-018), gardé pour les motifs déjà enregistrés.
         financial: "Analytische verdeling wordt niet geïmporteerd in een financieel dagboek."
         inactive: "De module Analytisch is niet actief: verwijder de analytische posten."
         unknown: "Onbekende analytische post %{code}."
