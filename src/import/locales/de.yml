@@ -1,0 +1,173 @@
+de:
+  import:
+    module:
+      name: "Buchungsimport"
+    permissions:
+      read: "Buchungsimporte, Warteschlange, Formate und Zuordnungen einsehen"
+      run: "Buchungsdateien lesen und importieren, prüfen, übertragen, verwerfen, Ausgleich übernehmen"
+      admin: "Formate und Zuordnungen einrichten, fehlende Konten anlegen, einen Import löschen, bereinigen"
+    menu:
+      import: "Buchungsimport"
+      import_run: "Buchungen importieren"
+      import_operations: "Zu bearbeitende Buchungen"
+      import_history: "Importverlauf"
+      import_formats: "Importformate"
+      import_mappings: "Importzuordnungen"
+    kinds:
+      csv: "CSV"
+      fec: "FEC"
+    ledger_kinds:
+      purchase: "Einkauf"
+      sale: "Verkauf"
+      financial: "Finanzen"
+      misc: "Sonstige Buchungen"
+    statuses:
+      pending: "Zu bearbeiten"
+      transferred: "Übertragen"
+      duplicate: "Duplikat"
+      discarded: "Verworfen"
+    mapping_kinds:
+      ledger: "Journal"
+      vat: "USt.-Code"
+      code: "Konto oder Stammsatz"
+    target_types:
+      ledger: "Journal"
+      vat: "USt.-Satz"
+      account: "Konto"
+      card: "Stammsatz"
+    fields:
+      date: "Datum"
+      ledger: "Journalcode"
+      group: "Gruppierungscode"
+      receipt: "Beleg"
+      label: "Buchungstext"
+      currency: "Währung"
+      due_date: "Fälligkeit"
+      third_party: "Geschäftspartner (Stammsatz)"
+      account: "Konto oder Stammsatz"
+      line_label: "Zeilentext"
+      amount: "Betrag"
+      side: "Seite (D oder C)"
+      debit: "Soll"
+      credit: "Haben"
+      quantity: "Menge"
+      vat_code: "USt.-Code"
+      vat_amount: "USt.-Betrag"
+      amount_incl: "Bruttobetrag"
+      analytic: "Kostenstellen"
+    separators:
+      comma: "Komma (,)"
+      semicolon: "Semikolon (;)"
+      tab: "Tabulator"
+      pipe: "Senkrechter Strich (|)"
+    quotes:
+      double: "Anführungszeichen (\")"
+      single: "Apostroph (')"
+      none: "Keine"
+    encodings:
+      utf-8: "UTF-8"
+      windows-1252: "Windows-1252"
+      iso-8859-15: "ISO 8859-15 (Latin-9)"
+      utf-16: "UTF-16"
+    decimal_separators:
+      comma: "Komma (1234,56)"
+      dot: "Punkt (1234.56)"
+    thousands_separators:
+      none: "Keines"
+      space: "Leerzeichen (1 234)"
+      dot: "Punkt (1.234)"
+      comma: "Komma (1,234)"
+      apostrophe: "Apostroph (1'234)"
+    errors:
+      choice:
+        invalid: "Unzulässiger Wert: %{value}."
+      access:
+        forbidden: "Fehlende Berechtigung: %{permission}."
+        module: "Das Modul %{module} ist in diesem Mandanten nicht aktiv."
+      file:
+        blank: "Wählen Sie eine Datei oder fügen Sie ihren Inhalt ein."
+        too_large: "Die Datei überschreitet %{max} MiB."
+        binary: "Diese Datei ist keine Textdatei."
+        empty: "Die Datei enthält keine Buchung."
+        filename_blank: "Die Datei muss einen Namen haben."
+        malformed_csv: "CSV-Datei nicht lesbar: %{detail}"
+        too_many_rows: "Die Datei überschreitet %{max} Zeilen."
+        already_imported: "Diese Datei wurde bereits am %{date} importiert (Import Nr. %{id})."
+      # Lecteur FEC propre retiré (D-IMP-016) : clés gardées pour les
+      # anomalies enregistrées par les imports déjà faits.
+      fec:
+        separator: "FEC-Kopfzeile ohne erkanntes Trennzeichen (Tabulator, senkrechter Strich oder Semikolon)."
+        columns: "Fehlende Felder in der FEC-Kopfzeile: %{columns}."
+        field_count: "Zeile %{row}: %{count} Felder statt %{expected}."
+        blank: "Zeile %{row}: Das Feld %{column} ist leer."
+      line:
+        date: "Zeile %{row}: Datum nicht lesbar (%{value})."
+        due_date: "Zeile %{row}: Fälligkeit nicht lesbar (%{value})."
+        date_mismatch: "Zeile %{row}: Datum weicht vom Buchungsdatum ab (%{value})."
+        amount: "Zeile %{row}: Betrag nicht lesbar (%{value})."
+        side: "Zeile %{row}: Seite nicht lesbar (%{value}); erwartet D oder C."
+        zero: "Zeile %{row}: Betrag ist null."
+        account_blank: "Zeile %{row}: Konto oder Stammsatz fehlt."
+        third_party_blank: "Zeile %{row}: Geschäftspartner fehlt."
+      format:
+        blank: "Wählen Sie das Format der CSV-Datei."
+        unknown: "Dieses Format existiert nicht mehr."
+        name:
+          blank: "Geben Sie dem Format einen Namen."
+          too_long: "Der Name darf höchstens %{max} Zeichen lang sein."
+          taken: "Ein Format mit diesem Namen existiert bereits."
+        description:
+          too_long: "Die Beschreibung darf höchstens %{max} Zeichen lang sein."
+        thousands_separator:
+          same: "Das Tausendertrennzeichen muss sich vom Dezimaltrennzeichen unterscheiden."
+        skip_lines:
+          range: "Die Anzahl der Kopfzeilen liegt zwischen 0 und 50."
+        columns:
+          not_allowed: "Das Feld „%{field}“ wird für diese Journalart nicht verwendet."
+          repeated: "Das Feld „%{field}“ ist zwei Spalten zugeordnet."
+          missing: "Geben Sie die Spalte für das Feld „%{field}“ an."
+          amount_both: "Geben Sie entweder Betrag und Seite oder Soll und Haben an."
+          amount_missing: "Geben Sie die Spalten für Betrag und Seite oder für Soll und Haben an."
+          too_many: "Ein Format hat höchstens %{max} Spalten."
+      ledger:
+        blank: "Kein Journal: Wählen Sie eines oder fügen Sie die Spalte mit dem Journalcode hinzu."
+        invalid: "Dieses Journal ist für Sie nicht freigegeben."
+        unknown: "Unbekanntes Journal %{code}: Fügen Sie seine Zuordnung hinzu."
+        kind: "Das Journal %{code} ist nicht von der erwarteten Art."
+        not_writable: "Sie können nicht in das Journal %{code} buchen."
+      operation:
+        no_line: "Die Buchung hat keine Zeile."
+        single_line: "Eine Buchung hat mindestens zwei Zeilen."
+        unbalanced: "Unausgeglichene Buchung: Soll %{debit}, Haben %{credit} (Differenz %{difference})."
+        financial_lines: "Eine Buchung in einem Finanzjournal hat nur eine Zeile."
+        not_pending: "Diese Buchung ist nicht mehr zu bearbeiten."
+        none_selected: "Markieren Sie mindestens eine Buchung."
+      code:
+        unknown: "Unbekanntes Konto oder unbekannter Stammsatz %{code}: Fügen Sie die Zuordnung hinzu."
+        unknown_account: "Konto %{code} fehlt im Kontenrahmen: Legen Sie es an oder fügen Sie seine Zuordnung hinzu."
+      third_party:
+        blank: "Der Geschäftspartner der Rechnung fehlt."
+        not_card: "Der Geschäftspartner %{code} muss ein Stammsatz sein, kein Konto."
+      vat:
+        unknown: "Unbekannter USt.-Code %{code}: Fügen Sie seine Zuordnung hinzu."
+      analytic:
+        # Refus retiré (D-IMP-018), gardé pour les motifs déjà enregistrés.
+        financial: "Die Kostenstellenaufteilung wird nicht in ein Finanzjournal importiert."
+        inactive: "Das Modul Kostenrechnung ist nicht aktiv: Entfernen Sie die Kostenstellen."
+        unknown: "Unbekannte Kostenstelle %{code}."
+        ambiguous: "Der Code %{code} bezeichnet Kostenstellen aus mehreren Kostenstellenplänen."
+      mapping:
+        source:
+          blank: "Geben Sie den Code aus der Datei an."
+          too_long: "Der Code darf höchstens %{max} Zeichen lang sein."
+          taken: "Der Code %{code} hat bereits eine Zuordnung."
+        target:
+          blank: "Geben Sie das Ziel im Mandanten an."
+          unknown: "%{code} existiert im Mandanten nicht."
+        note:
+          too_long: "Die Notiz darf höchstens %{max} Zeichen lang sein."
+      batch:
+        in_use: "Buchungen dieses Imports wurden bereits übertragen: Er wird beibehalten."
+      lettering:
+        not_fec: "Nur ein FEC enthält einen zu übernehmenden Ausgleich."
+        pending: "Ausgleich %{letter} des Kontos %{account}: Noch nicht alle Zeilen sind übertragen."

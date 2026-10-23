@@ -113,7 +113,7 @@ module Import
       text.gsub(/[[:cntrl:]]/, " ").gsub(/\s+/, " ").strip[0, max]
     end
 
-    # Sens écrit dans un fichier : `D`, `C`, débit, crédit (fr, en, nl),
+    # Sens écrit dans un fichier : `D`, `C`, débit, crédit (fr, en, nl, D-IMP-019),
     # `+1` et `-1` du FEC ; `nil` si illisible.
     def self.side(text : String) : String?
       case text.strip.downcase.unicode_normalize(:nfd).gsub(/\p{Mn}/, "")

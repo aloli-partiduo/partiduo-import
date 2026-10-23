@@ -4,7 +4,7 @@ require "../spec_helper"
 
 # Traductions des écrans de l'extension (ADR-005 D7) : chaque route de
 # `/ext/IMPORT/` servie en `GET` (liste tirée du routeur de Marten),
-# obtenue en fr, en et nl par un administrateur, sur plusieurs imports
+# obtenue dans chaque langue livrée par un administrateur, sur plusieurs imports
 # (opérations diverses transférées ou écartées ; FEC transféré en partie,
 # à lettrer, au compte inconnu ; achats ; banque), trois formats et les
 # correspondances du FEC. Contrôle de l'interface (`PartiduoUi::Translations`) :
@@ -14,7 +14,7 @@ require "../spec_helper"
 private alias S = Import::SpecSupport
 private alias Api = Import::Api
 
-describe "Traductions des écrans IMPORT (fr, en, nl)" do
+describe "Traductions des écrans IMPORT (langues livrées)" do
   it "rend chaque écran dans chaque langue, sans clé absente, brute ni interpolation non résolue" do
     browser = PartiduoUi::Books.admin
     S.user("bruno@example.com", "Bruno")
@@ -37,7 +37,7 @@ describe "Traductions des écrans IMPORT (fr, en, nl)" do
     begin
       explorer.crawl(browser, "IMPORT")
     ensure
-      # L'exploration laisse active la dernière langue obtenue (nl) ; les
+      # L'exploration laisse active la dernière langue obtenue (pt) ; les
       # specs suivantes attendent la langue par défaut.
       I18n.activate(Marten.settings.i18n.default_locale)
     end

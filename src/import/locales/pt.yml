@@ -1,0 +1,173 @@
+pt:
+  import:
+    module:
+      name: "Importação de operações"
+    permissions:
+      read: "Consultar as importações de operações, a área de espera, os formatos e as correspondências"
+      run: "Ler e importar ficheiros de operações, verificar, transferir, descartar, retomar a conciliação"
+      admin: "Configurar os formatos e as correspondências, criar as contas em falta, eliminar uma importação, purgar"
+    menu:
+      import: "Importação de operações"
+      import_run: "Importar operações"
+      import_operations: "Operações a tratar"
+      import_history: "Histórico das importações"
+      import_formats: "Formatos de importação de operações"
+      import_mappings: "Correspondências de importação"
+    kinds:
+      csv: "CSV"
+      fec: "FEC"
+    ledger_kinds:
+      purchase: "Compras"
+      sale: "Vendas"
+      financial: "Financeiro"
+      misc: "Operações diversas"
+    statuses:
+      pending: "A tratar"
+      transferred: "Transferida"
+      duplicate: "Duplicado"
+      discarded: "Descartada"
+    mapping_kinds:
+      ledger: "Diário"
+      vat: "Código de IVA"
+      code: "Conta ou ficha"
+    target_types:
+      ledger: "Diário"
+      vat: "Taxa de IVA"
+      account: "Conta"
+      card: "Ficha"
+    fields:
+      date: "Data"
+      ledger: "Código do diário"
+      group: "Código de agrupamento"
+      receipt: "Documento"
+      label: "Descrição da operação"
+      currency: "Moeda"
+      due_date: "Vencimento"
+      third_party: "Terceiro (ficha)"
+      account: "Conta ou ficha"
+      line_label: "Descrição da linha"
+      amount: "Montante"
+      side: "Sentido (D ou C)"
+      debit: "Débito"
+      credit: "Crédito"
+      quantity: "Quantidade"
+      vat_code: "Código de IVA"
+      vat_amount: "Montante de IVA"
+      amount_incl: "Montante com IVA"
+      analytic: "Rubricas analíticas"
+    separators:
+      comma: "Vírgula (,)"
+      semicolon: "Ponto e vírgula (;)"
+      tab: "Tabulação"
+      pipe: "Barra vertical (|)"
+    quotes:
+      double: "Aspas (\")"
+      single: "Apóstrofo (')"
+      none: "Nenhum"
+    encodings:
+      utf-8: "UTF-8"
+      windows-1252: "Windows-1252"
+      iso-8859-15: "ISO 8859-15 (Latin-9)"
+      utf-16: "UTF-16"
+    decimal_separators:
+      comma: "Vírgula (1234,56)"
+      dot: "Ponto (1234.56)"
+    thousands_separators:
+      none: "Nenhum"
+      space: "Espaço (1 234)"
+      dot: "Ponto (1.234)"
+      comma: "Vírgula (1,234)"
+      apostrophe: "Apóstrofo (1'234)"
+    errors:
+      choice:
+        invalid: "Valor não admitido: %{value}."
+      access:
+        forbidden: "Permissão em falta: %{permission}."
+        module: "O módulo %{module} não está ativo neste dossier."
+      file:
+        blank: "Escolha um ficheiro ou cole o seu conteúdo."
+        too_large: "O ficheiro excede %{max} MiB."
+        binary: "Este ficheiro não é um ficheiro de texto."
+        empty: "O ficheiro não contém nenhuma operação."
+        filename_blank: "O ficheiro deve ter um nome."
+        malformed_csv: "Ficheiro CSV ilegível: %{detail}"
+        too_many_rows: "O ficheiro excede %{max} linhas."
+        already_imported: "Este ficheiro já foi importado em %{date} (importação n.º %{id})."
+      # Lecteur FEC propre retiré (D-IMP-016) : clés gardées pour les
+      # anomalies enregistrées par les imports déjà faits.
+      fec:
+        separator: "Cabeçalho do FEC sem separador reconhecido (tabulação, barra vertical ou ponto e vírgula)."
+        columns: "Campos em falta no cabeçalho do FEC: %{columns}."
+        field_count: "Linha %{row}: %{count} campos em vez de %{expected}."
+        blank: "Linha %{row}: o campo %{column} está vazio."
+      line:
+        date: "Linha %{row}: data ilegível (%{value})."
+        due_date: "Linha %{row}: vencimento ilegível (%{value})."
+        date_mismatch: "Linha %{row}: data diferente da data da operação (%{value})."
+        amount: "Linha %{row}: montante ilegível (%{value})."
+        side: "Linha %{row}: sentido ilegível (%{value}); esperado D ou C."
+        zero: "Linha %{row}: montante nulo."
+        account_blank: "Linha %{row}: conta ou ficha em falta."
+        third_party_blank: "Linha %{row}: terceiro em falta."
+      format:
+        blank: "Escolha o formato do ficheiro CSV."
+        unknown: "Este formato já não existe."
+        name:
+          blank: "Atribua um nome ao formato."
+          too_long: "O nome não deve exceder %{max} caracteres."
+          taken: "Já existe um formato com este nome."
+        description:
+          too_long: "A descrição não deve exceder %{max} caracteres."
+        thousands_separator:
+          same: "O separador de milhares deve ser diferente do separador decimal."
+        skip_lines:
+          range: "O número de linhas de cabeçalho vai de 0 a 50."
+        columns:
+          not_allowed: "O campo «%{field}» não se utiliza neste tipo de diário."
+          repeated: "O campo «%{field}» está atribuído a duas colunas."
+          missing: "Indique a coluna do campo «%{field}»."
+          amount_both: "Indique o montante e o sentido, ou o débito e o crédito."
+          amount_missing: "Indique a coluna do montante e a do sentido, ou as do débito e do crédito."
+          too_many: "Um formato tem no máximo %{max} colunas."
+      ledger:
+        blank: "Nenhum diário: escolha um, ou adicione a coluna do código do diário."
+        invalid: "Este diário não está acessível para este utilizador."
+        unknown: "Diário %{code} desconhecido: adicione a sua correspondência."
+        kind: "O diário %{code} não é do tipo esperado."
+        not_writable: "Não é possível lançar no diário %{code}."
+      operation:
+        no_line: "A operação não tem nenhuma linha."
+        single_line: "Um lançamento tem pelo menos duas linhas."
+        unbalanced: "Lançamento desequilibrado: débito %{debit}, crédito %{credit} (diferença %{difference})."
+        financial_lines: "Uma operação de um diário financeiro tem apenas uma linha."
+        not_pending: "Esta operação já não está por tratar."
+        none_selected: "Selecione pelo menos uma operação."
+      code:
+        unknown: "Conta ou ficha %{code} desconhecida: adicione a sua correspondência."
+        unknown_account: "Conta %{code} ausente do plano: crie-a ou adicione a sua correspondência."
+      third_party:
+        blank: "O terceiro da fatura está em falta."
+        not_card: "O terceiro %{code} deve ser uma ficha, não uma conta."
+      vat:
+        unknown: "Código de IVA %{code} desconhecido: adicione a sua correspondência."
+      analytic:
+        # Refus retiré (D-IMP-018), gardé pour les motifs déjà enregistrés.
+        financial: "A repartição analítica não se importa num diário financeiro."
+        inactive: "O módulo Analítica não está ativo: retire as rubricas analíticas."
+        unknown: "Rubrica analítica %{code} desconhecida."
+        ambiguous: "O código %{code} designa rubricas de vários planos analíticos."
+      mapping:
+        source:
+          blank: "Indique o código do ficheiro."
+          too_long: "O código não deve exceder %{max} caracteres."
+          taken: "O código %{code} já tem uma correspondência."
+        target:
+          blank: "Indique o destino no dossier."
+          unknown: "%{code} não existe no dossier."
+        note:
+          too_long: "A nota não deve exceder %{max} caracteres."
+      batch:
+        in_use: "Há operações desta importação já transferidas: a importação é conservada."
+      lettering:
+        not_fec: "Só um FEC contém uma conciliação a retomar."
+        pending: "Conciliação %{letter} da conta %{account}: nem todas as suas linhas foram ainda transferidas."

@@ -97,7 +97,7 @@ src/
     ├── parsers/                # CSV, FEC lu par le cœur, montants, dates, encodages, champs
     ├── services/               # correspondances, TVA d'un FEC, essai à blanc, doublons, transfert, lettrage
     ├── api/                    # contrat public Import::Api
-    └── locales/                # fr, en, nl
+    └── locales/                # fr, en, nl, de, es, it, pt
 ui/
 └── bulma/                      # interface pour partiduo-ui-bulma (application « import_ui »)
     ├── bulma.cr                # routes sous /ext/IMPORT/, compteur du menu

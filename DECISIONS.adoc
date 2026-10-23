@@ -393,7 +393,7 @@ active ; sinon motif `access.module`), puis `Parsers::FecFile` traduit le
 changent pas (D-IMP-011) : correspondances, comptes créés sur demande,
 lettrage, écriture reprise par `partiduo-migrate` reconnue. Les défauts du
 lecteur gardent leur clé (`accounting.fec_reader.issues.*`, traduite par
-le cœur en fr, en, nl) :
+le cœur dans chaque langue livrée) :
 
 * en-tête, encodage, fichier vide ou sans écriture : le fichier est
   refusé, comme avant ;
@@ -459,7 +459,7 @@ et symbole refusés* (`unreadable_amount`)
 *Compatibilité.* Les anomalies enregistrées par les imports déjà faits
 (`import_batch.issues`, `import_operation.read_problems`) citent les clés
 `import.errors.fec.*` et `import.errors.line.*` : elles restent traduites
-(clés gardées dans les trois langues). Rien n'est relu ni migré : une
+(clés gardées dans chaque langue livrée). Rien n'est relu ni migré : une
 opération déjà en attente garde ses lignes, vérifiées comme avant.
 
 === D-IMP-017 — TVA des écritures saisies ligne à ligne (20 octobre 2026)
@@ -530,8 +530,26 @@ retiré.
 
 *Compatibilité.* Une opération refusée avec `analytic.financial` le reste
 jusqu'à sa prochaine vérification, qui la rend transférable ; la clé est
-gardée dans les trois langues pour les motifs enregistrés. Les formats
+gardée dans chaque langue livrée pour les motifs enregistrés. Les formats
 existants ne changent pas.
+
+=== D-IMP-019 — Interface en sept langues, sens des fichiers inchangé (23 octobre 2026)
+
+*Contexte.* L'interface de Partiduo passe de fr, en, nl à fr, en, nl, de,
+es, it, pt (`Partiduo::LOCALES`) ; règles fiscales inchangées.
+
+*Choix.* Les traductions de l'extension et de ses écrans (`src/import/locales`,
+`ui/bulma/locales`) existent dans les sept langues ; les specs bouclent sur
+`Partiduo::LOCALES` au lieu d'une liste recopiée. Le sens écrit dans une
+colonne d'un fichier (`Parsers.side`) reste reconnu par une liste
+fixe (`D`, `C`, débit, crédit, debet, `+1`, `1`, `-1`, `+`, `-`) : c'est
+le contenu d'un fichier, non l'interface, et il ne passe pas par les
+traductions. Il n'est pas étendu à Soll, Haben, debe, haber, dare, avere,
+débito, crédito, qui viennent de logiciels que l'extension ne lit pas
+aujourd'hui ; un tel fichier se lit par les colonnes débit et crédit, ou
+par le montant et un sens `+` ou `-`.
+
+*Compatibilité.* Aucun format ni import existant ne change.
 
 == Amendements proposés au contrat du cœur
 

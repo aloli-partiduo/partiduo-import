@@ -1,0 +1,173 @@
+it:
+  import:
+    module:
+      name: "Importazione di operazioni"
+    permissions:
+      read: "Consultare le importazioni di operazioni, l'area di attesa, i formati e le corrispondenze"
+      run: "Leggere e importare file di operazioni, verificare, trasferire, scartare, riprendere l'abbinamento"
+      admin: "Configurare i formati e le corrispondenze, creare i conti mancanti, eliminare un'importazione, eliminare definitivamente"
+    menu:
+      import: "Importazione di operazioni"
+      import_run: "Importa operazioni"
+      import_operations: "Operazioni da elaborare"
+      import_history: "Cronologia delle importazioni"
+      import_formats: "Formati di importazione delle operazioni"
+      import_mappings: "Corrispondenze di importazione"
+    kinds:
+      csv: "CSV"
+      fec: "FEC"
+    ledger_kinds:
+      purchase: "Acquisti"
+      sale: "Vendite"
+      financial: "Finanziario"
+      misc: "Operazioni varie"
+    statuses:
+      pending: "Da elaborare"
+      transferred: "Trasferita"
+      duplicate: "Duplicato"
+      discarded: "Scartata"
+    mapping_kinds:
+      ledger: "Giornale"
+      vat: "Codice IVA"
+      code: "Conto o scheda"
+    target_types:
+      ledger: "Giornale"
+      vat: "Aliquota IVA"
+      account: "Conto"
+      card: "Scheda"
+    fields:
+      date: "Data"
+      ledger: "Codice del giornale"
+      group: "Codice di raggruppamento"
+      receipt: "Documento"
+      label: "Descrizione dell'operazione"
+      currency: "Valuta"
+      due_date: "Scadenza"
+      third_party: "Terzo (scheda)"
+      account: "Conto o scheda"
+      line_label: "Descrizione della riga"
+      amount: "Importo"
+      side: "Segno (D o C)"
+      debit: "Dare"
+      credit: "Avere"
+      quantity: "Quantità"
+      vat_code: "Codice IVA"
+      vat_amount: "Importo IVA"
+      amount_incl: "Importo IVA inclusa"
+      analytic: "Voci analitiche"
+    separators:
+      comma: "Virgola (,)"
+      semicolon: "Punto e virgola (;)"
+      tab: "Tabulazione"
+      pipe: "Barra verticale (|)"
+    quotes:
+      double: "Virgolette (\")"
+      single: "Apostrofo (')"
+      none: "Nessuno"
+    encodings:
+      utf-8: "UTF-8"
+      windows-1252: "Windows-1252"
+      iso-8859-15: "ISO 8859-15 (Latin-9)"
+      utf-16: "UTF-16"
+    decimal_separators:
+      comma: "Virgola (1234,56)"
+      dot: "Punto (1234.56)"
+    thousands_separators:
+      none: "Nessuno"
+      space: "Spazio (1 234)"
+      dot: "Punto (1.234)"
+      comma: "Virgola (1,234)"
+      apostrophe: "Apostrofo (1'234)"
+    errors:
+      choice:
+        invalid: "Valore non ammesso: %{value}."
+      access:
+        forbidden: "Autorizzazione mancante: %{permission}."
+        module: "Il modulo %{module} non è attivo in questo dossier."
+      file:
+        blank: "Scelga un file o ne incolli il contenuto."
+        too_large: "Il file supera %{max} MiB."
+        binary: "Questo file non è un file di testo."
+        empty: "Il file non contiene alcuna operazione."
+        filename_blank: "Il file deve avere un nome."
+        malformed_csv: "File CSV illeggibile: %{detail}"
+        too_many_rows: "Il file supera %{max} righe."
+        already_imported: "Questo file è già stato importato il %{date} (importazione n. %{id})."
+      # Lecteur FEC propre retiré (D-IMP-016) : clés gardées pour les
+      # anomalies enregistrées par les imports déjà faits.
+      fec:
+        separator: "Intestazione del FEC senza separatore riconosciuto (tabulazione, barra verticale o punto e virgola)."
+        columns: "Campi mancanti nell'intestazione del FEC: %{columns}."
+        field_count: "Riga %{row}: %{count} campi invece di %{expected}."
+        blank: "Riga %{row}: il campo %{column} è vuoto."
+      line:
+        date: "Riga %{row}: data illeggibile (%{value})."
+        due_date: "Riga %{row}: scadenza illeggibile (%{value})."
+        date_mismatch: "Riga %{row}: data diversa da quella dell'operazione (%{value})."
+        amount: "Riga %{row}: importo illeggibile (%{value})."
+        side: "Riga %{row}: segno illeggibile (%{value}); atteso D o C."
+        zero: "Riga %{row}: importo nullo."
+        account_blank: "Riga %{row}: conto o scheda assente."
+        third_party_blank: "Riga %{row}: terzo assente."
+      format:
+        blank: "Scelga il formato del file CSV."
+        unknown: "Questo formato non esiste più."
+        name:
+          blank: "Assegni un nome al formato."
+          too_long: "Il nome non deve superare %{max} caratteri."
+          taken: "Esiste già un formato con questo nome."
+        description:
+          too_long: "La descrizione non deve superare %{max} caratteri."
+        thousands_separator:
+          same: "Il separatore delle migliaia deve essere diverso dal separatore decimale."
+        skip_lines:
+          range: "Il numero di righe di intestazione va da 0 a 50."
+        columns:
+          not_allowed: "Il campo «%{field}» non si usa per questo tipo di giornale."
+          repeated: "Il campo «%{field}» è assegnato a due colonne."
+          missing: "Indichi la colonna del campo «%{field}»."
+          amount_both: "Indichi l'importo e il segno, oppure il dare e l'avere."
+          amount_missing: "Indichi la colonna dell'importo e quella del segno, oppure quelle del dare e dell'avere."
+          too_many: "Un formato ha al massimo %{max} colonne."
+      ledger:
+        blank: "Nessun giornale: ne scelga uno, oppure aggiunga la colonna del codice del giornale."
+        invalid: "Questo giornale non Le è accessibile."
+        unknown: "Giornale %{code} sconosciuto: aggiunga la sua corrispondenza."
+        kind: "Il giornale %{code} non è del tipo atteso."
+        not_writable: "Non può registrare nel giornale %{code}."
+      operation:
+        no_line: "L'operazione non ha alcuna riga."
+        single_line: "Una registrazione ha almeno due righe."
+        unbalanced: "Registrazione non bilanciata: dare %{debit}, avere %{credit} (differenza %{difference})."
+        financial_lines: "Un'operazione di un giornale finanziario ha una sola riga."
+        not_pending: "Questa operazione non è più da elaborare."
+        none_selected: "Selezioni almeno un'operazione."
+      code:
+        unknown: "Conto o scheda %{code} sconosciuto: aggiunga la sua corrispondenza."
+        unknown_account: "Conto %{code} assente dal piano: lo crei o aggiunga la sua corrispondenza."
+      third_party:
+        blank: "Il terzo della fattura è assente."
+        not_card: "Il terzo %{code} deve essere una scheda, non un conto."
+      vat:
+        unknown: "Codice IVA %{code} sconosciuto: aggiunga la sua corrispondenza."
+      analytic:
+        # Refus retiré (D-IMP-018), gardé pour les motifs déjà enregistrés.
+        financial: "La ripartizione analitica non si importa in un giornale finanziario."
+        inactive: "Il modulo Analitica non è attivo: rimuova le voci analitiche."
+        unknown: "Voce analitica %{code} sconosciuta."
+        ambiguous: "Il codice %{code} indica voci di più piani analitici."
+      mapping:
+        source:
+          blank: "Indichi il codice del file."
+          too_long: "Il codice non deve superare %{max} caratteri."
+          taken: "Il codice %{code} ha già una corrispondenza."
+        target:
+          blank: "Indichi la destinazione nel dossier."
+          unknown: "%{code} non esiste nel dossier."
+        note:
+          too_long: "La nota non deve superare %{max} caratteri."
+      batch:
+        in_use: "Alcune operazioni di questa importazione sono già state trasferite: l'importazione viene conservata."
+      lettering:
+        not_fec: "Solo un FEC contiene un abbinamento da riprendere."
+        pending: "Abbinamento %{letter} del conto %{account}: non tutte le sue righe sono ancora state trasferite."
