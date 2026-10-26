@@ -1,5 +1,5 @@
 name: partiduo-import
-version: 0.1.8
+version: 0.1.9
 
 description: |
   Extension d'import d'opérations en masse de Partiduo (ADR-003) :

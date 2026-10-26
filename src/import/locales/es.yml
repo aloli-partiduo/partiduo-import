@@ -131,7 +131,7 @@ es:
           too_many: "Un formato tiene como máximo %{max} columnas."
       ledger:
         blank: "Ningún diario: elija uno o añada la columna del código del diario."
-        invalid: "Este diario no le está abierto."
+        invalid: "No tiene acceso a este diario."
         unknown: "Diario %{code} desconocido: añada su correspondencia."
         kind: "El diario %{code} no es del tipo esperado."
         not_writable: "No puede registrar en el diario %{code}."
